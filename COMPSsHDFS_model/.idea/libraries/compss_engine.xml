@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="compss-engine">
-    <CLASSES>
-      <root url="jar:///opt/COMPSs/Runtime/compss-engine.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
