@@ -39,17 +39,7 @@ public class WordCount {
 		}
 		System.out.println("[LOG] Result size = " + result.keySet().size());
 
-		write(result,"output_wc.txt");
 
-	}
-
-	public static void write(HashMap<String, Integer> m1, String path) {
-		String msg = "";
-		for (String key : m1.keySet()) {
-			 msg = msg + "("+key + ", " + m1.get(key)+ ")\n";
-		}
-		HDFS dfs = new HDFS(defaultFS);
-		dfs.writeFILE(msg, path,false);
 
 	}
 

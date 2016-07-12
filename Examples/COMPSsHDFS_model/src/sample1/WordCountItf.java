@@ -17,12 +17,6 @@ public interface WordCountItf {
 	);
 
 	@Method(declaringClass = "sample1.WordCount")
-	public void write(
-			@Parameter HashMap<String, Integer> m1,
-			@Parameter String path
-	);
-
-	@Method(declaringClass = "sample1.WordCount")
 	public HashMap<String, Integer> map(
 			@Parameter(type = Type.OBJECT, direction = Direction.IN) Bloco blk
 	);
