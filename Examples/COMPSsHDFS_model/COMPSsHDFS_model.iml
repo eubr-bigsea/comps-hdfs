@@ -11,25 +11,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar:///usr/local/hadoop/share/hadoop/common/hadoop-common-2.7.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar:///usr/local/hadoop/share/hadoop/common/lib/commons-collections-3.2.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar:///usr/local/hadoop/share/hadoop/hdfs/hadoop-hdfs-2.7.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/HDSF_Integration.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
