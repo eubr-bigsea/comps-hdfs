@@ -1,17 +1,23 @@
 # Integration: COMPSs and HDFS
 ----------------------
 
-## How to Run a application 
+## How to Configure the Integration
 
 First, you need to import the library ["HDFS_Integration.jar"](https://github.com/eubr-bigsea/compss-hdfs/tree/master/Examples/COMPSsHDFS_model) in your project. 
+
+Second, you also need to export the enviroment variable which represent the path of hdfs, example: 
+
+`export MASTER_HADOOP_URL=hdfs://localhost:9000`
+
+## How to Run a application
  
 Before execute a code, remember to start the HDFS:
 
 `sbin/start-dfs.sh`
 
-And the rest is normal, I prefer to use the script like: 
+Then, I prefer to use the script like that to execute: 
 
-`runcompss -m -d --classpath=$DIRECTORY/COMPSs_simple_HDFS.jar sample1.WordCount`
+`runcompss -m -d --classpath=$DIRECTORY/COMPSs_simple_HDFS.jar sample1.WordCount` which you need to change `$DIRECTORY` to the path of the jar. 
 
 ### Example: WordCount
 

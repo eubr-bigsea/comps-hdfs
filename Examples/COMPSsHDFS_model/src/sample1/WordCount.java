@@ -9,10 +9,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 
+
+
 public class WordCount {
 
 
-	static String defaultFS = "hdfs://localhost:9000"; //local of the HDFS's master node
+	static String defaultFS = System.getenv("MASTER_HADOOP_URL"); // local of the HDFS's master node -> you need to set
+	                                                              // a env variable with the path of master node
 
 	public static void main ( String[] args ) throws Exception {
 
@@ -20,8 +23,10 @@ public class WordCount {
 		// HDFS Integration     										//
 		// ------------------------------------------------------------//
 
+
+		System.out.println("MASTER_HADOOP_URL:" + defaultFS);
 		HDFS dfs =  new HDFS(defaultFS);
-		String fileHDFS = "text_huge.in";  //Means that the file is in the root of hdfs
+		String fileHDFS = "file_200mb.in";  //Means that the file is in the root of hdfs
 
 		ArrayList<Bloco> HDFS_SPLITS_LIST = dfs.findALLBlocks(fileHDFS);
 		int n_blk = HDFS_SPLITS_LIST.size();
