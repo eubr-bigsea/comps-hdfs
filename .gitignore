@@ -1,0 +1,14 @@
+Examples/COMPSsHDFS_model/target/*
+Examples/COMPSsHDFS_model/.idea/*
+
+HDFS_Integration/.idea/*
+HDFS_Integration/target/antrun
+HDFS_Integration/target/archive-tmp
+HDFS_Integration/target/classes
+HDFS_Integration/target/maven-archiver
+HDFS_Integration/target/surefire
+
+.idea/*
+*.iml
+*.sh
+

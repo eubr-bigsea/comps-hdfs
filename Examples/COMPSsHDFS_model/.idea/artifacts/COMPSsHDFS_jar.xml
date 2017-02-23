@@ -1,9 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="COMPSsHDFS:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/</output-path>
-    <root id="archive" name="COMPSs_simple_HDFS.jar">
-      <element id="module-output" name="COMPSsHDFS_model" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/HDSF_Integration.jar" path-in-jar="/" />
-    </root>
-  </artifact>
-</component>

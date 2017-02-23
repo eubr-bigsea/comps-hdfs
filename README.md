@@ -3,7 +3,7 @@
 
 In order to COMPSs be able to access the HDFS's data, it has been developed an integration COMPSs and HDFS. This integration consists on a HDFS connector.
 
-In order to use this integration in your COMPSs project, you only need to import the jar connector [(HDFS_Integration.jar)](https://github.com/eubr-bigsea/compss-hdfs/tree/master/HDFS_Integration/target/HDFS_Integration-1.0.jar)  in your COMPSs project (see an example of pom.xml in Examples/COMPSsHDFS_model).
+In order to use this integration in your COMPSs project, you only need to import the jar connector [(HDFS_Integration.jar)](https://github.com/eubr-bigsea/compss-hdfs/tree/master/HDFS_Integration/target)  in your COMPSs project (see an example of pom.xml in Examples/COMPSsHDFS_model).
 
 It's recommended to export the enviroment variable which represents the path of hdfs, example: 
 
