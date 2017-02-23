@@ -1,6 +1,6 @@
 package sample1;
 
-import integration.Bloco;
+import integration.Block;
 import integration.HDFS;
 
 import java.util.ArrayList;
@@ -19,6 +19,19 @@ public class WordCount {
 
 	public static void main ( String[] args ) throws Exception {
 
+
+		String fileHDFS = "";
+
+		// Get and parse arguments
+		int argIndex = 0;
+		while (argIndex < args.length) {
+			String arg = args[argIndex++];
+			if (arg.equals("-i")) {
+				fileHDFS = args[argIndex++];
+			}
+		}
+
+
 		// ------------------------------------------------------------//
 		// HDFS Integration     										//
 		// ------------------------------------------------------------//
@@ -26,9 +39,8 @@ public class WordCount {
 
 		System.out.println("MASTER_HADOOP_URL:" + defaultFS);
 		HDFS dfs =  new HDFS(defaultFS);
-		String fileHDFS = "file_200mb.in";  //Means that the file is in the root of hdfs
 
-		ArrayList<Bloco> HDFS_SPLITS_LIST = dfs.findALLBlocks(fileHDFS);
+		ArrayList<Block> HDFS_SPLITS_LIST = dfs.findALLBlocks(fileHDFS);
 		int n_blk = HDFS_SPLITS_LIST.size();
 		System.out.println("Number of HDFS BLOCKS: " + n_blk);
 
@@ -38,7 +50,7 @@ public class WordCount {
 
 		HashMap<String, Integer> result = new HashMap<String, Integer>();
 		System.out.println("[LOG] Computing result");
-		for(Bloco b : HDFS_SPLITS_LIST) {
+		for(Block b : HDFS_SPLITS_LIST) {
 			HashMap<String, Integer> partialResult = map(b);
 			result = mergeResults(partialResult, result);
 		}
@@ -66,7 +78,7 @@ public class WordCount {
 
 
 
-	public static HashMap<String, Integer> map(Bloco blk) {
+	public static HashMap<String, Integer> map(Block blk) {
 
 		HashMap<String, Integer> res = new HashMap<String, Integer>();
 		while (blk.HasRecords()){
