@@ -6,7 +6,7 @@ public class Block implements Serializable {
 
     //private static final long serialVersionUID = 1L;
 
-    private long start=0;
+    private long START=0;
     private long end = 0;
     private int index = 0;
     private long state = 0;
@@ -20,35 +20,21 @@ public class Block implements Serializable {
 
     public Block (){}
 
-    public Block(long start,  long end, boolean last,
-                 String defaultFS, String path, int number_block) {
-        this.start = start;
-        this.state = start;
-        this.end = end;
-        this.last_block = last;
-        this.defaultFS = defaultFS;
-
-        this.index = number_block;
-        this.path = path;
-
-    }
+    public void setStart(long start)   { this.START = start;  this.state = start;   }
+    public void setEnd  (long end)     { this.end = end;    }
+    public void setTheLast  (boolean ultimo)    {  this.last_block = ultimo;   }
+    public void setIndex    (int index)         {  this.index = index;   }
 
 
-        public void setStart(long start)   { this.start = start;  this.state = start;   }
-        public void setEnd  (long end)     { this.end = end;    }
-        public void setTheLast  (boolean ultimo)    {  this.last_block = ultimo;   }
-        public void setIndex    (int index)         {  this.index = index;   }
-
-
-        public long getStart()   {   return start;  }
-        public long getEnd()     {   return end;    }
-        public String getPath()  {   return path;   }
-        public int getIndex()    {   return index;  }
+    public long getStart()   {   return START;  }
+    public long getEnd()     {   return end;    }
+    public String getPath()  {   return path;   }
+    public int getIndex()    {   return index;  }
 
 
     public void start_conection(){
         this.dfs = new HDFS(defaultFS);
-        this.dfs.setfile(path, this.start);
+        this.dfs.setfile(path, this.START);
         this.started = true;
     }
 
@@ -123,10 +109,10 @@ public class Block implements Serializable {
 
 
 
-    public String[] getRecords (){ // List of ALL RECORDS  ---> ARRUMAR ISSO
+    public String[] getRecords (char separator){ // List of ALL RECORDS  ---> ARRUMAR ISSO
         if(!started)
             start_conection();
-        String[] split = dfs.getSplit(start, end,path,last_block,'\n').split("\n");
+        String[] split = dfs.getSplit(START, end,path,last_block, separator).split(separator+"");
         setHasRecords(false);
 
         return split;
@@ -146,7 +132,7 @@ public class Block implements Serializable {
         }
         String record = null;
         try {
-            record = dfs.readLineText(start,end);
+            record = dfs.readLineText(START,end);
         } catch (Exception e) {
             System.out.println("[ERROR] - Block.getRecord()");
             e.printStackTrace();
@@ -169,7 +155,7 @@ public class Block implements Serializable {
 
         byte[] chunck = new byte[size];
         try {
-            chunck = dfs.read_chunck(start,end,size,index,last_block);
+            chunck = dfs.read_chunck(START,end,size,index,last_block);
         } catch (Exception e) {
             System.out.println("[ERROR] - Block.getRecord_Chunck()");
             e.printStackTrace();
@@ -217,6 +203,6 @@ public class Block implements Serializable {
     // public boolean istheLast() {       return ultimo;    }
 
     public String toString(){
-        return "File: "+path+" | Block "+index+ ": " + start + " Length " + end + " -  Last block: "+last_block ;
+        return "File: "+path+" - Block id_"+index+ ": Start " + START + " Length " + end + " -  Last block: "+last_block ;
     }
 }
