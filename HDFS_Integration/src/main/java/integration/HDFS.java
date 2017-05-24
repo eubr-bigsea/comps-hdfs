@@ -4,42 +4,40 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.io.*;
-
-
 import org.apache.hadoop.util.LineReader;
 
 import java.io.*;
 import java.util.ArrayList;
 
-import java.io.Serializable;
 
 public class HDFS implements Serializable {
 
     //private static final long serialVersionUID = 1L;
 
     private Configuration conf;
-    private FileSystem fs;
-    private FSDataInputStream fsDataInputStream;
+    private long fragment_size = 0;
+    private boolean debug =false;
     private Path path = null;
     private String defaultFS = "";
+
+    private FileSystem fs;
+    private FSDataInputStream fsDataInputStream;
     private LineReader reader = null;
+
     private boolean ended = false;
     private long state=0;
-    public long bytes_readeds = 0;
-    private boolean debug =false;
-    public long fragment_size = 0;
+    private long bytes_readeds = 0;
+
 
 
     public HDFS(String defaultFS){
         this.defaultFS = defaultFS;
-        //System.out.println("DefaultFS recebido:" + defaultFS);
         this.conf = new Configuration();
         this.conf.set("fs.defaultFS", defaultFS);
         this.conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName() );
         this.conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName() );
-        this.fragment_size = 67108864;
-        // The size of the block is not always the same of the cluster size
-        //System.out.println(conf.get("dfs.blocksize"));
+        this.conf.setBoolean("fs.hdfs.impl.disable.cache", true);
+        this.conf.setBoolean("fs.file.impl.disable.cache", true);
 
 
         //  this.conf.set("dfs.replication", "1");          //ONLY IF IS SINGLE NODE
@@ -47,7 +45,6 @@ public class HDFS implements Serializable {
         try{
             this.fs = FileSystem.newInstance(conf);
 
-            //.get(conf);
 
         } catch (Exception e) {
             System.out.println("Error: HDFS's constructor");
@@ -55,25 +52,30 @@ public class HDFS implements Serializable {
         }
     }
 
+
+
     /*---------------------------------------------------------------------------------------
 
                                     Management Operations
 
      ---------------------------------------------------------------------------------------*/
 
-    /* - setUserHDFS
-            @Method: Set the user of the hdfs
-            @in: user's name
-    */
+
+    /**
+     * Set the user who is accessing the data
+     *
+     * @param  user  username
+     */
     public void setUserHDFS(String user){
         this.conf.set("hadoop.job.ugi", user);
-
     }
 
-    /* - ls
-            @Method: Return a list of all files in the folder
-            @in:     Folder's path
-            @out:    String with all the contents of the file
+
+    /**
+     * List all the files in the folder
+     *
+     * @param  dir  Path of the folder
+     * @return      Return a list of all files in the folder
      */
     public ArrayList<String> ls (String dir){
         ArrayList<String> files = new ArrayList<String>();
@@ -88,10 +90,11 @@ public class HDFS implements Serializable {
         return files;
     }
 
-    /* - mkdir
-            @Method: create a new folder on the HDFS
-            @in: The path
-            @Alert: You need to create the folders in order
+
+    /**
+     * Create a new folder on the HDFS. You need to create the folders in order.
+     *
+     * @param  path  Path of the folder
      */
     public void mkdir (String path){
         try{
@@ -101,16 +104,19 @@ public class HDFS implements Serializable {
         }
     }
 
-    /* - findALLBlocks
-        @Method: create a list of Blocks of a file in HDFS
-        @in:     Path of the file
-        @out:    List of all blocks of the file
-    */
+    /**
+     * Returns a list of blocks of a file in the HDFS
+     *
+     * @param  path  Path of the file in the HDFS
+     * @return       List of blocks splitted by number of the real blocks in the HDFS
+     */
     public ArrayList<Block> findALLBlocks (String path){
         path = defaultFS+path;
         if (debug)
             System.out.println("Current Path: " + path);
         ArrayList<Block> b = new ArrayList<Block>();
+        long first_offset = 0;
+
         try{
 
             FileStatus Status;
@@ -134,10 +140,14 @@ public class HDFS implements Serializable {
 
                 c.setPath(path);
                 c.setIndex(number_block);
+                if (number_block == 0)
+                    first_offset = aLocation.getLength();
+                c.setFragment_size(first_offset);
 
                 number_block++;
 
                 b.add(c);
+
 
             }
 
@@ -150,11 +160,13 @@ public class HDFS implements Serializable {
     }
 
 
-    /* - findBlocksByRecords
-    @Method: create a list of Blocks of a file in HDFS
-    @in:     Path of the file
-    @out:    List of blocks splitted by number of nodes
-    */
+    /**
+     * Returns a list of n blocks of a file in the HDFS
+     *
+     * @param  path  Path of the file in the HDFS
+     * @param  nodes Number of blocks wanterd
+     * @return       List of blocks splitted by number of nodes
+     */
     public ArrayList<Block> findBlocksByRecords (String path, int nodes){
         path = defaultFS+path;
         if (debug)
@@ -168,6 +180,7 @@ public class HDFS implements Serializable {
             int number_block = 0;
             long start  = 0;
             long offset = 0;
+            long first_offset = 0;
 
             if (debug) System.out.println("size: " + size + " BlckSize:"+blockSize);
 
@@ -187,6 +200,10 @@ public class HDFS implements Serializable {
                 c.setPath(path);
                 c.setIndex(number_block);
 
+                if (number_block == 0)
+                    first_offset = offset;
+                c.setFragment_size(first_offset);
+
                 blocks_list.add(c);
                 number_block++;
             }
@@ -199,17 +216,21 @@ public class HDFS implements Serializable {
         return blocks_list;
     }
 
-    public void closeConection()  {
-       // try {
-            //fsDataInputStream.close();
-           // fs.close();
-            System.out.println("Try to close conections");
-     //   } catch (IOException e) {
-     //       System.out.println("[ERROR] - HDFS.closeConection()");
-     //       e.printStackTrace();
-    //    }
 
+    public void closeConection()  {
+        IOUtils.closeStream(fsDataInputStream);
     }
+
+    public boolean hasrecord(){   return !ended;   }
+
+    public long refreshState (){
+        return this.state;
+    }
+
+    public void setDebug(boolean d){
+        debug = d;
+    }
+
 
     /*---------------------------------------------------------------------------------------
 
@@ -218,181 +239,182 @@ public class HDFS implements Serializable {
      ---------------------------------------------------------------------------------------*/
 
 
-    /* - readALLFiletoString
-            @Method: Return all the file in a String
-            @in:     Path of the file
-            @out:    String with all the contents of the file
-    */
-    public String readALLFiletoString (String path){
-        String text ="";
-        BufferedReader br =null;
-        Path pt=new Path(path);
-
-        /*
-            * Conferir de qual forma fica mais rapido
-            *
-                ContentSummary cSummary;
-                try (FileSystem hdfs = pt.getFileSystem(conf)) {
-                    cSummary = hdfs.getContentSummary(pt);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                long length = cSummary.getLength();
-                         fsDataInputStream.readFully(0,    );
-        */
-        try{
-            FSDataInputStream fsDataInputStream = fs.open(pt);
-            br = new BufferedReader(new InputStreamReader(fsDataInputStream));
-
-            String line;
-            line=br.readLine();
-            while (line != null){
-                text +=line+"\n";
-                line=br.readLine();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return text;
-    }
 
 
+    /**
+     * Responsible to  return the next record (delimited by "\n" or "\r\n") in the current Block.
+     *
+     * @param  start    Position of first byte in the current Block
+     * @param  offset   Length of the current Block
+     * @param  last     whether the block is the last block of a file or not
+     * @return          A record
+     */
 
-    public String  readLineText( long start, long offset ) throws Exception {
+    public String  readLineText( long start, long offset, boolean last ) throws Exception {
         String split = null;
         Text buffer =  new Text();
 
         try {
-            if(bytes_readeds ==0) {                                        //Initial Split
-                if(start !=  0)   bytes_readeds+=reader.readLine(buffer);  //remove the trash of the previous block;
+            if(bytes_readeds ==0) {
+                if(start !=  0)
+                    bytes_readeds+=reader.readLine(buffer);  //remove the trash of the previous block;
             }
 
             bytes_readeds+= reader.readLine(buffer);
             split = buffer.toString();
 
-            if (bytes_readeds >= offset )
+            if (last){
+                if  (bytes_readeds >= offset )
+                    this.ended = true;
+            } else if (bytes_readeds > offset )
                 this.ended = true;
 
         } catch (EOFException e) {
-
+            System.out.println("[ERROR] - HDFS.readLineText()");
         }
+
         return split;
 
     }
 
 
+//    public String getSplit (long initial, long length, String path, boolean last, char delimiter){
+//
+//        try{
+//            Path pt=new Path(path);
+//            FSDataInputStream fsDataInputStream = fs.open(pt);
+//            long pos =  0;
+//            if (debug)
+//                System.out.println("HDFS.getSplit = ["+initial + " "+ length+"]" );
+//
+//            //Copy all block
+//            StringBuffer buffer = new StringBuffer();
+//            if(initial ==0) { // is the first block
+//                byte[] buff = new byte[(int) length];
+//                fsDataInputStream.read(initial, buff, 0, (int) length);
+//                buffer.append(new String(buff, "UTF-8"));
+//                pos =  initial+length;
+//            }else{ //is not the first block
+//                byte[] buff = new byte[(int) length+2];
+//                fsDataInputStream.read(initial-1, buff, 0, (int) length);
+//                buffer.append(new String(buff, "UTF-8"));
+//                pos =  initial+length-1;
+//            }
+//
+//            //Find the logical end of this text stretch
+//            boolean notfinalBlock = true;
+//            if(!last) {
+//                if (!buffer.substring(buffer.length()-1).equals(delimiter+"")) { //verify if is ended
+//                    int offset2 = 256;
+//                    byte[] buff = new byte[offset2];
+//                    while (notfinalBlock) {
+//                        fsDataInputStream.read(pos, buff, 0, offset2);
+//                        pos+=offset2;
+//                        String tmp = new String(buff, "UTF-8");
+//                        if (tmp.contains(delimiter + "")) {
+//                            int posi = tmp.indexOf(delimiter + ""); //find first delimiter
+//                            tmp = tmp.substring(0, posi+1);      //delete util this part
+//                            notfinalBlock = false;
+//                        }
+//                        buffer.append(tmp);
+//                    }
+//                }
+//            }
+//
+//            if(initial != 0) {
+//                int posi = buffer.indexOf(delimiter+""); //find first delimiter
+//                buffer.delete(0,posi+1);                  //delete util this part
+//            }
+//
+//            return buffer.toString().replaceAll("[\\p{Cntrl}&&[^\\r\\n\\t]]", "");
+//        } catch (Exception e) {
+//            System.out.println("[ERROR] - HDFS.getSplit");
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
+//
+//
+//    /* - readALLFiletoString
+//            @Method: Return all the file in a String
+//            @in:     Path of the file
+//            @out:    String with all the contents of the file
+//
+//        Não é necessario, basta criar um block unico
+//    */
+//    public String readALLFiletoString (String path){
+//        String text ="";
+//        BufferedReader br =null;
+//        Path pt=new Path(path);
+//
+//        try{
+//            FSDataInputStream fsDataInputStream = fs.open(pt);
+//            br = new BufferedReader(new InputStreamReader(fsDataInputStream));
+//
+//            String line;
+//            line=br.readLine();
+//            while (line != null){
+//                text +=line+"\n";
+//                line=br.readLine();
+//            }
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return text;
+//    }
 
 
-
-    /* - getSplit
-            @Method: Return a split (logical block)
-            @in:     The initial and final block's position, the path, the logical's delimiter,
-                     and the info if this is a last block
-            @out:    The text stretch respective to that block
-    */
-    public String getSplit (long initial, long length, String path, boolean last, char delimiter){
-
-        try{
-            Path pt=new Path(path);
-            FSDataInputStream fsDataInputStream = fs.open(pt);
-            long pos =  0;
-            if (debug)
-                System.out.println("HDFS.getSplit = ["+initial + " "+ length+"]" );
-
-            StringBuffer buffer = new StringBuffer();
-            if(initial ==0) {
-                //Copy all block
-                byte[] buff = new byte[(int) length];
-                fsDataInputStream.read(initial, buff, 0, (int) length);
-                buffer.append(new String(buff, "UTF-8"));
-                pos =  initial+length;
-            }else{
-                //Copy all block
-                byte[] buff = new byte[(int) length+2];
-                fsDataInputStream.read(initial-1, buff, 0, (int) length);
-                buffer.append(new String(buff, "UTF-8"));
-                pos =  initial+length-1;
-            }
-
-            //Find the logical end of this text stretch
-            boolean notfinalBlock = true;
-            if(!last) {
-              //  System.out.println("ultimo char:"+buffer.substring(buffer.length()-4,buffer.length()-1) +"=");
-                if (!buffer.substring(buffer.length()-1).equals(delimiter+"")) { //verify if is ended
-                    byte[] buff = new byte[1024];
-                    while (notfinalBlock) {
-                        fsDataInputStream.read(pos, buff, 0, 1024);
-                        pos+=4096;
-                        String tmp = new String(buff, "UTF-8");
-                        if (tmp.contains(delimiter + "")) {
-                            int posi = tmp.indexOf(delimiter + ""); //find first delimiter
-                            tmp = tmp.substring(0, posi+1);      //delete util this part
-                           // System.out.println(tmp+"==");
-                            notfinalBlock = false;
-                        }
-                        //System.out.println("add");
-                        buffer.append(tmp);
-                    }
-                }//else
-                  //  System.out.println("aconteceu");
-            }
-
-
-
-            if(initial != 0) { //remove the trash before the logical's start
-                int posi = buffer.indexOf(delimiter+""); //find first delimiter
-                buffer.delete(0,posi+1);                  //delete util this part
-            }
-            return buffer.toString().replaceAll("[\\p{Cntrl}&&[^\\r\\n\\t]]", "");
-        } catch (Exception e) {
-            System.out.println("[ERROR] - HDFS.getSplit");
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-
+    /**
+     * Returns a list of records in the current Block
+     *
+     * @param  path  Path of the file
+     * @param  pos   Position in the current file to seek
+     */
     public void setfile (String path, long pos)  { // ou um ou outro
         try {
             Path pt=new Path(path);
             fsDataInputStream = fs.open(pt);
             fsDataInputStream.seek(pos);
-
+            bytes_readeds = 0;
             reader = new LineReader(fsDataInputStream);
+            state = pos;
         } catch (IOException e) {
             System.out.println("[ERROR] - HDFS.setfile");
             e.printStackTrace();
         }
-        state = pos;
+
     }
 
 
-    /* - read_chunck
-        @Method: Return a chunck of bytes (byte[])
-        @in:     The initial and final block's position, the chunck's size,
-                 The block's index, and if the block is the last.
-        @out:    Return a chunck of bytes (byte[])
+    /**
+     * Returns a chunck of bytes (byte[])
+     *
+     * @param start             Initial position
+     * @param offset            Length to read
+     * @param size_of_chunck    The chunck's size
+     * @param i_block       The block's index
+     * @param the_last              Whether the block is the last or not
+     * @return                  A chunck of "size_of_chunck" bytes (byte[])
      */
-    public byte[] read_chunck( long start, long offset, int size_of_chunck,int index_bloco, boolean last ) throws Exception {
+    public byte[] read_chunck( long start, long offset, int size_of_chunck,int i_block, boolean the_last ) throws Exception {
         byte[] chunck = new byte[size_of_chunck];
+
         if(state == start){
 
-
-
-
             /*
-                Eu sei quantos blocos tem, qual o tamanho dos blocos, entao eu sei onde vou começar a extrair
-                FALTA PEGAR O TAMANHO DO BLOCO DINAMICAMENTE
+                Eu sei quantos blocos tem, qual o tamanho dos blocos, entao eu sei onde
+                vou começar a extrair
              */
-            if(index_bloco!=0){
-                int faltantes = index_bloco*67108864 - (size_of_chunck)*((index_bloco*67108864)/size_of_chunck); //divisao por inteiro, entao só obtenho a parte inteira
-                int jump = size_of_chunck - faltantes;
+            if(i_block!=0){
+                long faltantes = i_block*fragment_size -
+                               (size_of_chunck)*((i_block* fragment_size)/size_of_chunck); //divisao por inteiro, entao só obtenho a parte inteira
+                int jump = size_of_chunck - (int) faltantes;
                 state = state+jump;
             }
         }
-        if(last)
+
+        if(the_last)
             if((state + size_of_chunck ) > (start+offset))
                 size_of_chunck = (int) ((start+offset) - state);
 
@@ -407,65 +429,58 @@ public class HDFS implements Serializable {
     }
 
 
+//    public String getRecord (int RecordsReadeds, long start, int end, String path, boolean last, char delimiter) throws IOException {
+//        StringBuffer buffer = new StringBuffer();
+//
+//        try{
+//
+//            byte ch;
+//            boolean notfinalBlock = true;
+//            buffer = new StringBuffer();
+//
+//            long pos = start;
+//
+//            if(RecordsReadeds == 0) { //remove the trash
+//
+//                if(pos !=0) {
+//                    do {
+//                        ch = fsDataInputStream.readByte();  //read before counting position
+//                        pos++; //position tracker
+//                    }while (ch != (byte) delimiter);
+//
+//                }
+//            }
+//
+//            while (notfinalBlock){
+//                ch = fsDataInputStream.readByte();  //read before counting position
+//                pos++; //position tracker
+//                // System.out.println(ch);
+//                if(ch==((byte) delimiter)){
+//                    notfinalBlock = false;
+//                }else{
+//                    if(pos != (start+end) )
+//                        buffer.append((char)ch);
+//                }
+//
+//                if(last && (pos >= end))
+//                    notfinalBlock = false;
+//
+//            }
+//
+//            //System.out.println("SPLIT: "+ buffer.toString());
+//            state = (int) pos;
+//            // System.out.println("State: "+state);
+//
+//
+//        } catch (Exception e) {
+//            System.out.println("Error: readBlock");
+//            e.printStackTrace();
+//        }
+//        return buffer.toString();
+//    }
 
 
-    public boolean hasrecord(){   return !ended;   }
 
-
-    public String getRecord (int RecordsReadeds, long initial, int end, String path, boolean last, char delimiter) throws IOException {
-        StringBuffer buffer = new StringBuffer();
-
-        try{
-
-            byte ch;
-            boolean notfinalBlock = true;
-            buffer = new StringBuffer();
-
-            long pos = initial;
-
-            if(RecordsReadeds == 0) { //remove the trash
-
-                if(pos !=0) {
-                    do {
-                        ch = fsDataInputStream.readByte();  //read before counting position
-                        pos++; //position tracker
-                    }while (ch != (byte) delimiter);
-
-                }
-            }
-
-            while (notfinalBlock){
-                ch = fsDataInputStream.readByte();  //read before counting position
-                pos++; //position tracker
-                // System.out.println(ch);
-                if(ch==((byte) delimiter)){
-                    notfinalBlock = false;
-                }else{
-                    if(pos != (initial+end) )
-                        buffer.append((char)ch);
-                }
-
-                if(last && (pos >= end))
-                    notfinalBlock = false;
-
-            }
-
-            //System.out.println("SPLIT: "+ buffer.toString());
-            state = (int) pos;
-            // System.out.println("State: "+state);
-
-
-        } catch (Exception e) {
-            System.out.println("Error: readBlock");
-            e.printStackTrace();
-        }
-        return buffer.toString();
-    }
-
-
-    public long refreshState (){
-        return this.state;
-    }
 
     /*---------------------------------------------------------------------------------------
 
@@ -473,8 +488,12 @@ public class HDFS implements Serializable {
 
      ---------------------------------------------------------------------------------------*/
 
-
-
+    /**
+     * Create a empty file in the HDFS
+     *
+     * @param  dst          Path of the file
+     * @param  overwrite    Overwrite the file whether exists or not
+     */
     public void  createFile(String dst, boolean overwrite) throws IOException {
         fs = FileSystem.get(conf);
         Path pt=new Path(dst);
@@ -483,6 +502,13 @@ public class HDFS implements Serializable {
 
     }
 
+    /**
+     * Create a empty file in the HDFS
+     *
+     * @param  text         The content to be written
+     * @param  dst          Path of the file
+     * @param  append       Whether append the content into the file (if exists) or not
+     */
     public boolean writeFILE (String text, String dst, boolean append)  {
         try {
             fs = FileSystem.get(conf);
