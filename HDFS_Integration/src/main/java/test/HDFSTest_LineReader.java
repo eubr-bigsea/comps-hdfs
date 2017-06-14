@@ -2,10 +2,12 @@ package test;
 
 import integration.Block;
 import integration.HDFS;
+import storage.StorageItf;
 
 
 import java.util.ArrayList;
 import java.lang.*;
+import java.util.List;
 
 
 /**
@@ -29,13 +31,27 @@ public class HDFSTest_LineReader {
 
         boolean test_getRecords = false;
         boolean test2 = false;
-        boolean test_chunck = true;
+        boolean test_chunck = false;
         try {
              ArrayList<String> table_comparable1 = new ArrayList<String>();
              ArrayList<String> table_comparable2 = new ArrayList<String>();
              System.out.println("DefaultFS:" + defaultFS);
              HDFS dfs =  new HDFS(defaultFS);
              String[] all;
+
+            name = "/user/pdm2/FILE_TEST_01.txt"; // each line has same size
+
+
+
+
+
+
+
+
+
+
+
+
 
             if(test_getRecords) {
                 System.out.println("\n\n#########\nTesting:  dfs.findBlocksByRecords\n#########");
