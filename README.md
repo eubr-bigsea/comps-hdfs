@@ -48,7 +48,7 @@ for(Block blk : HDFS_SPLITS_LIST) {
 }
 ```
 
-After compile it, use the command: 
+After compile it (There is already a jar in the folder WordCount/target), use the command: 
 
 	runcompss --classpath=$PWD/target/wordcount-hdfs.jar hdfs_1way.WordCount -i <file path in the HDFS>
 
@@ -61,6 +61,7 @@ For instance, the file *confHDFS.txt* will contain:
 
 	HDFS://localhost:9000
 	/user/username/file1
+	/user/username/file2
 	
 
 As the first form, remember to start the HDFS before the execution:
@@ -69,7 +70,7 @@ As the first form, remember to start the HDFS before the execution:
 	
 Then, add the flag *storage_conf* in the your usual runcompss command:
 	
-	runcompss --storage_conf=$PWD/configHDFS.txt --classpath=$PWD/target/wordcount-hdfs.jar hdfs_2way.WordCount ...
+	runcompss --storage_conf=$PWD/configHDFS.txt --classpath=$PWD/example.jar  ...
 
 ### Example: WordCount 2
 
@@ -93,8 +94,9 @@ for(Block blk : HDFS_SPLITS_LIST) {
 	result = mergeResults(partialResult, result);
 }
 ```
+After compile it (There is already a jar in the folder WordCount/target), use the command: 
 
-
+	runcompss --storage_conf=$PWD/configHDFS.txt --classpath=$PWD/target/wordcount-hdfs.jar hdfs_2way.WordCount ...
 
 
 
