@@ -1,2 +1,2 @@
 hdfs://localhost:9000
-/user/pdm2/teste_100
+/file-example.txt
