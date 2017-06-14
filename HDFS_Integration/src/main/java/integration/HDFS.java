@@ -110,6 +110,61 @@ public class HDFS implements Serializable {
      * @param  path  Path of the file in the HDFS
      * @return       List of blocks splitted by number of the real blocks in the HDFS
      */
+    public ArrayList<Block> findALLBlocksByStorageAPI (String path,int number_block){
+        path = defaultFS+path;
+        if (debug)
+            System.out.println("Current Path: " + path);
+        ArrayList<Block> b = new ArrayList<Block>();
+        long first_offset = 0;
+
+        try{
+
+            FileStatus Status;
+            BlockLocation[] bLocations;
+            Path file = new Path(path);
+            FileStatus fStatus = fs.getFileStatus(file);
+            Status=fStatus;
+            int baseNumber = number_block;
+            bLocations= fs.getFileBlockLocations(Status, 0, Status.getLen());
+
+            for(BlockLocation aLocation : bLocations){
+
+                Block c = new Block();
+                c.setStart(aLocation.getOffset());
+                c.setEnd(aLocation.getLength());
+                c.setDefaultFS(defaultFS);
+
+                if ((number_block +1) == (baseNumber+bLocations.length) )  c.setTheLast(true);
+                else                                                       c.setTheLast(false);
+
+                c.setPath(path);
+                c.setIndex(number_block);
+                if (number_block == 0)
+                    first_offset = aLocation.getLength();
+                c.setFragment_size(first_offset);
+                c.setLocations(aLocation.getHosts());
+
+                number_block++;
+
+                b.add(c);
+
+
+            }
+
+        } catch (Exception e) {
+            System.out.println("[ERROR] - HDFS.findALLBlocksByStorageAPI()");
+            e.printStackTrace();
+        }
+
+        return b;
+    }
+
+    /**
+     * Returns a list of blocks of a file in the HDFS
+     *
+     * @param  path  Path of the file in the HDFS
+     * @return       List of blocks splitted by number of the real blocks in the HDFS
+     */
     public ArrayList<Block> findALLBlocks (String path){
         path = defaultFS+path;
         if (debug)
@@ -143,6 +198,7 @@ public class HDFS implements Serializable {
                 if (number_block == 0)
                     first_offset = aLocation.getLength();
                 c.setFragment_size(first_offset);
+                c.setLocations(aLocation.getHosts());
 
                 number_block++;
 
@@ -203,7 +259,7 @@ public class HDFS implements Serializable {
                 if (number_block == 0)
                     first_offset = offset;
                 c.setFragment_size(first_offset);
-
+                c.setLocations(new String[]{});
                 blocks_list.add(c);
                 number_block++;
             }

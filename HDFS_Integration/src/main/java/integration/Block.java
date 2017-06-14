@@ -2,8 +2,11 @@ package integration;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
-public class Block implements Serializable,Cloneable {
+import storage.StubItf;
+
+public class Block implements Serializable, Cloneable{
 
     //private static final long serialVersionUID = 1L;
 
@@ -15,6 +18,7 @@ public class Block implements Serializable,Cloneable {
     private boolean last_block    = false;
     private long    fragment_size = 0;
     private String  path          = "";
+    private String[] locations;
 
 
     //Transient variables of ths block
@@ -25,22 +29,23 @@ public class Block implements Serializable,Cloneable {
 
     public Block (){}
 
-    public void setStart(long start)   { this.START = start;  this.state = start;   }
-    public void setEnd  (long end)     { this.end = end;    }
-    public void setTheLast  (boolean ultimo)    {  this.last_block = ultimo;   }
-    public void setIndex    (int index)         {  this.index = index;   }
-    public void setFragment_size (long f) {this.fragment_size = f;}
-    public void setDefaultFS(String defaultFS){
-        this.defaultFS = defaultFS;
-    }
-    public void setHasRecords (boolean hasRecords) { this.hasRecords = hasRecords;   }
-    public void setPath(String path) { this.path = path;   }
+    public void setStart(long start)            { this.START = start;  this.state = start;   }
+    public void setEnd  (long end)              { this.end = end;    }
+    public void setTheLast  (boolean ultimo)    { this.last_block = ultimo;   }
+    public void setIndex    (int index)         { this.index = index;   }
+    public void setFragment_size (long f)       { this.fragment_size = f;}
+    public void setDefaultFS(String defaultFS)  { this.defaultFS = defaultFS; }
+    public void setHasRecords (boolean hasRecords)  { this.hasRecords = hasRecords;   }
+    public void setPath(String path)                { this.path = path;   }
+    public void setLocations(String[] locs)         {this.locations = locs;}
+
 
     public long     getStart()          {   return START;  }
     public long     getEnd()            {   return end;    }
     public String   getPath()           {   return path;   }
     public int      getIndex()          {   return index;  }
-    public long     getFragment_size()  {return fragment_size;}
+    public long     getFragment_size()  {   return fragment_size;}
+    public String[] getLocations()      {   return locations;}
 
 
 
@@ -85,54 +90,10 @@ public class Block implements Serializable,Cloneable {
         blk.setPath(this.getPath());
         blk.setIndex(this.getIndex());
         blk.setFragment_size(this.getFragment_size());
+        blk.setLocations(this.locations);
 
         return blk;
     }
-
-
-
-//    /*
-//    private ArrayList<String> records = new ArrayList<String>();
-//
-//    public ArrayList<String> GetRecords (){ // List of ALL RECORDS
-//
-//
-//      //  setHasRecords(false);
-//
-//        System.out.println( "AQUI");
-//        String record = null;
-//        try {
-//            records = dfs.readALLLineText(start,end);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        state = dfs.refreshState();
-//        setHasRecords(false);
-//        return records;
-//    }
-//
-//    public String GETRECORD2(){
-//
-//        if(records.isEmpty())
-//            records = GetRecords();
-//
-//        String record = records.get(++RecordsReaded);
-//
-//        return record;
-//    }
-//
-//    public boolean HAS(){
-//        if(records.isEmpty())
-//            records = GetRecords();
-//
-//        return (RecordsReaded<records.size());
-//
-//    }
-//    */
-
-
 
 
     /**
@@ -182,12 +143,6 @@ public class Block implements Serializable,Cloneable {
         return split;
     }
 
-
-    /* - getRecord_Chunck
-         @Method: To read records with pattern
-         @in:     The size of the piace
-         @out:    Return a piace of n bytes
-    */
     /**
      * Returns a array of n bytes
      *
@@ -225,9 +180,13 @@ public class Block implements Serializable,Cloneable {
      */
     public String toString(){
         String tmp = (last_block)? "Yes":"No";
-        return  "File: "+path+" - Block id_"+index+ ": Start " + START +
+        String nodes = "";
+        for (int i = 0; i<locations.length;i++)
+            nodes+=locations[i];
+
+        return  "<<File: "+path+" - Block id_"+index+ ": Start " + START +
                 " Length "+ end + " Fragment size:" + fragment_size +
-                " - Last block: "+ tmp;
+                " - Last block: "+ tmp + " - in: "+nodes +">>";
 
     }
 
@@ -265,6 +224,28 @@ public class Block implements Serializable,Cloneable {
         last_block    = Boolean.parseBoolean(config[5]);
         fragment_size = Long.parseLong(config[6]);
     }
+
+
+    //-------------------------------------------//
+    // StubItf:
+
+    public void deletePersistent(){
+        //HDFS will handle it
+    }
+
+    public void makePersistent(String id){
+        //HDFS will handle it
+    }
+
+    public String getID(){
+        //Its important to COMPSs
+        return index+"";
+    }
+
+
+    //-------------------------------------------//
+
+
 
 
 }
