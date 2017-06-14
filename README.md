@@ -24,9 +24,9 @@ Then, run your COMPSs's project as usual.
 
 	
 
-### Example: WordCount
+### Example: WordCount 1
 
-There is an example in this repository explaining how to use the API in your code. The folder *"Examples/COMPSsHDFS_model"* is a code example of how to make the COMPSs read data from a HDFS's file. In this example, the steps were:
+There is an example in this repository explaining how to use the API in your code. The folder *"Examples/WordCount"* is a code example of how to make the COMPSs read data from a HDFS's file. In this example, the steps were:
 
 * Use the HDFS class to retrieve the list of blocks;
 * Each block is independent and it is able to return each record belonged to him.
@@ -50,7 +50,7 @@ for(Block blk : HDFS_SPLITS_LIST) {
 
 After compile it, use the command: 
 
-	runcompss --classpath=target/example-1.0.jar sample1.WordCount -i <file path in the HDFS>
+	runcompss --classpath=$PWD/target/wordcount-hdfs.jar hdfs_1way.WordCount -i <file path in the HDFS>
 
 
 ## How to Run a Application (second form)
@@ -61,7 +61,6 @@ For instance, the file *confHDFS.txt* will contain:
 
 	HDFS://localhost:9000
 	/user/username/file1
-	/user/username/file2
 	
 
 As the first form, remember to start the HDFS before the execution:
@@ -70,12 +69,37 @@ As the first form, remember to start the HDFS before the execution:
 	
 Then, add the flag *storage_conf* in the your usual runcompss command:
 	
-	runcompss --storage_conf=$PWD/configHDFS.txt --classpath=$PWD/<name_file>.jar ...
+	runcompss --storage_conf=$PWD/configHDFS.txt --classpath=$PWD/target/wordcount-hdfs.jar hdfs_2way.WordCount ...
+
+### Example: WordCount 2
+
+In this other example, you will have the same steps:
+
+* Retrieve the list of blocks;
+* Each block is independent and it is able to return each record belonged to him.
+
+
+```
+//1º - Create a HDFS object (StorageItf):
+public static StorageItf dfs;
+	
+//2º - Retrieve a list of all blocks of the file input (the id 0 
+//     refers to the first file written in the config file):
+ArrayList<Bloco> HDFS_SPLITS_LIST = storage.getBlocks(0);
+
+//3º - Use each block retrieved like a file as usual:
+for(Block blk : HDFS_SPLITS_LIST) {
+	HashMap<String, Integer> partialResult = map(blk);
+	result = mergeResults(partialResult, result);
+}
+```
 
 
 
 
-## How to edit the Integration
+
+
+## How to edit or rebuild the Integration
 
 If you want to change or develop something in the HDFS's connector you could use the ["pom.xml"](https://github.com/eubr-bigsea/compss-HDFS/tree/master/HDFS_Integration/pom.xml) (Maven) provided in this repository to build a new jar: 
 
