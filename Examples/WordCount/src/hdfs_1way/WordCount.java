@@ -3,12 +3,7 @@ package hdfs_1way;
 import integration.Block;
 import integration.HDFS;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-
+import java.util.*;
 
 
 public class WordCount {
@@ -21,13 +16,15 @@ public class WordCount {
 
 
 		String fileHDFS = "";
-
+		Boolean list = false;
 		// Get and parse arguments
 		int argIndex = 0;
 		while (argIndex < args.length) {
 			String arg = args[argIndex++];
 			if (arg.equals("-i")) {
 				fileHDFS = args[argIndex++];
+			}else if (arg.equals("-list")) {
+				list = true;
 			}
 		}
 
@@ -55,6 +52,11 @@ public class WordCount {
 			result = mergeResults(partialResult, result);
 		}
 		System.out.println("[LOG] Result size = " + result.keySet().size());
+		if (list){
+			for (String key : result.keySet()){
+				System.out.println("'"+key+"', "+result.get(key));
+			}
+		}
 
 
 

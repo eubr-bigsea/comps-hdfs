@@ -19,6 +19,17 @@ public class WordCount {
 
 	public static void main ( String[] args ) throws Exception {
 
+		Boolean list = false;
+		// Get and parse arguments
+		int argIndex = 0;
+		while (argIndex < args.length) {
+			String arg = args[argIndex++];
+			if (arg.equals("-list")) {
+				list = true;
+			}
+		}
+
+
 		// ------------------------------------------------------------//
 		// HDFS Integration     										//
 		// ------------------------------------------------------------//
@@ -38,6 +49,13 @@ public class WordCount {
 			result = mergeResults(partialResult, result);
 		}
 		System.out.println("[LOG] Result size = " + result.keySet().size());
+
+		System.out.println("[LOG] Result size = " + result.keySet().size());
+		if (list){
+			for (String key : result.keySet()){
+				System.out.println("'"+key+"', "+result.get(key));
+			}
+		}
 
 	}
 

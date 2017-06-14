@@ -17,7 +17,7 @@ public interface WordCountItf {
 			@Parameter HashMap<String, Integer> m2
 	);
 
-	@Method(declaringClass = "shdfs_1way.WordCount")
+	@Method(declaringClass = "hdfs_1way.WordCount")
 	public HashMap<String, Integer> map(
 			@Parameter(type = Type.OBJECT, direction = Direction.IN) Block blk
 	);

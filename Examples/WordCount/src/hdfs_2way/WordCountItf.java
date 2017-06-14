@@ -11,13 +11,13 @@ import java.util.HashMap;
 
 public interface WordCountItf {
 
-	@Method(declaringClass = "sample1.WordCount")
+	@Method(declaringClass = "hdfs_2way.WordCount")
 	public HashMap<String, Integer> mergeResults(
 			@Parameter HashMap<String, Integer> m1,
 			@Parameter HashMap<String, Integer> m2
 	);
 
-	@Method(declaringClass = "sample1.WordCount")
+	@Method(declaringClass = "hdfs_2way.WordCount")
 	public HashMap<String, Integer> map(
 			@Parameter(type = Type.OBJECT, direction = Direction.IN) Block blk
 	);
