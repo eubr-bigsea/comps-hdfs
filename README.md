@@ -8,6 +8,8 @@ In order to use this integration in your COMPSs project, you only need to import
 The idea of this API is to use a file in the HDFS as a commom file. You can read the entire file from HDFS and then split it or you can read the same file in the HDFS already splitted. The second way is more elegant and the number of fragmentations of the file (number of splits) can be choosed. There are two options about the number of fragmentations: the first one is retrieve the natural number of logical blocks (it means, the same fragmentation adopted by HDFS to store the data), using the command *findALLBlocks(filename)* and the second way is to retrieve the blocks by forcing a number of split, using the command *findBlocksByRecords(filename,number)*.
  
 Besides these two forms of choosing the fragmentation, in this current project, there are two ways to use this API. One that simply uses the API to handle the HDFS file like a commom file retrieving the blocks and then reading some data from this partition in runtime. The other way is a "static" way, meaning, you write the name of the files that will be read in the execution in a external file (config file), then it will be sent to the runcompss at the beggining of the execution and finally the natural logical blocks of the files in the config file will be retrieved. The difference between these two ways is that the last one can tell to the COMPSs where the blocks are stored to try to process these data in the right place and the other way it does not happen.
+
+See more information at: https://eubr-bigsea.github.io/compss-hdfs/
 	
 
 ## How to Run a Application (first form)
