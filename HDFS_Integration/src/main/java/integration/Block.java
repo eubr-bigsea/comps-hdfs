@@ -29,22 +29,107 @@ public class Block implements Serializable, Cloneable{
 
     public Block (){}
 
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setStart(long start)            { this.START = start;  this.state = start;   }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setEnd  (long end)              { this.end = end;    }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setTheLast  (boolean ultimo)    { this.last_block = ultimo;   }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setIndex    (int index)         { this.index = index;   }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setFragment_size (long f)       { this.fragment_size = f;}
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setDefaultFS(String defaultFS)  { this.defaultFS = defaultFS; }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setHasRecords (boolean hasRecords)  { this.hasRecords = hasRecords;   }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setPath(String path)                { this.path = path;   }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public void setLocations(String[] locs)         {this.locations = locs;}
 
 
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public long     getStart()          {   return START;  }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public long     getEnd()            {   return end;    }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public String   getPath()           {   return path;   }
+    /**
+     * @deprecated
+     */
     public int      getIndex()          {   return index;  }
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public long     getFragment_size()  {   return fragment_size;}
+
+    /**
+     * The user should not use this method.
+     *
+     * @deprecated
+     */
     public String[] getLocations()      {   return locations;}
 
 
@@ -212,7 +297,7 @@ public class Block implements Serializable, Cloneable{
 
 
     /**
-     * Set this block with the settings passed by parameter
+     * Set this block with the settings passed by parameter. The user should not use this method.
      *
      * @deprecated 
      */
@@ -232,21 +317,27 @@ public class Block implements Serializable, Cloneable{
     // StubItf:
 
     /**
-     * @deprecated 
+     * The user should not use this method.
+     *
+     * @deprecated
      */
     public void deletePersistent(){
         //HDFS will handle it
     }
 
     /**
-     * @deprecated 
+     * The user should not use this method.
+     *
+     * @deprecated
      */
     public void makePersistent(String id){
         //HDFS will handle it
     }
 
     /**
-     * @deprecated 
+     * The user should not use this method.
+     *
+     * @deprecated
      */
     public String getID(){
         //Its important to COMPSs

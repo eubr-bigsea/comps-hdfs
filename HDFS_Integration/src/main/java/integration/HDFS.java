@@ -102,14 +102,10 @@ public class HDFS implements Serializable {
     }
 
     /**
-     *
-     * @param path
-     * @param number_block
-     * @return
+     * The user should not use this method.
      *
      * @deprecated
      */
-
     public ArrayList<Block> findALLBlocksByStorageAPI (String path,int number_block){
         path = defaultFS+path;
         if (debug)
@@ -428,7 +424,7 @@ public class HDFS implements Serializable {
     }
 
     /**
-     * Create a empty file in the HDFS
+     * Write the text in a HDFS file.
      *
      * @param  text         The content to be written
      * @param  dst          Path of the file
