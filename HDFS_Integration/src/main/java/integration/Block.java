@@ -195,6 +195,7 @@ public class Block implements Serializable, Cloneable{
      *
      * @return   Inform the filename, the id, the initial position, the length, the fragmentation of
      *           the blocks and whether is the last block or not.
+     * @deprecated
      */
     public String[] getConfBlock(){
         String[] config = new String[7];
@@ -213,6 +214,7 @@ public class Block implements Serializable, Cloneable{
     /**
      * Set this block with the settings passed by parameter
      *
+     * @deprecated 
      */
     public void setConfBlock(String[] config) {
 
@@ -229,14 +231,23 @@ public class Block implements Serializable, Cloneable{
     //-------------------------------------------//
     // StubItf:
 
+    /**
+     * @deprecated 
+     */
     public void deletePersistent(){
         //HDFS will handle it
     }
 
+    /**
+     * @deprecated 
+     */
     public void makePersistent(String id){
         //HDFS will handle it
     }
 
+    /**
+     * @deprecated 
+     */
     public String getID(){
         //Its important to COMPSs
         return index+"";
