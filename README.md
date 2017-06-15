@@ -34,16 +34,23 @@ There is an example in this repository explaining how to use the API in your cod
 * Each block is independent and it is able to return each record belonged to him.
 
 ```
-//1º - Get the path of the HDFS:
+//1º - import the classes:
+
+import integration.Block;
+import integration.HDFS;
+
+...
+
+//2º - Get the path of the HDFS:
 String defaultFS = System.getenv("MASTER_HADOOP_URL"); 
 
-//2º - Create a HDFS object:
+//3º - Create a HDFS object:
 HDFS dfs =  new HDFS(defaultFS);
 
-//3º - Retrieve a list of all blocks of the file input:
+//4º - Retrieve a list of all blocks of the file input:
 ArrayList<Bloco> HDFS_SPLITS_LIST = dfs.findALLBlocks(fileHDFS);
 
-//4º - Use each block retrieved like a file as usual, like the example:
+//5º - Use each block retrieved like a file as usual, like the example:
 for(Block blk : HDFS_SPLITS_LIST) {
 	HashMap<String, Integer> partialResult = map(blk);
 	result = mergeResults(partialResult, result);
@@ -83,14 +90,20 @@ In this other example, you will have the same steps:
 
 
 ```
-//1º - Create a HDFS object (StorageItf):
+//1º - import the classes:
+
+import integration.Block;
+import storage.StorageItf;
+
+...
+//2º - Create a HDFS object (StorageItf):
 public static StorageItf dfs;
 	
-//2º - Retrieve a list of all blocks of the file input (the id 0 
+//3º - Retrieve a list of all blocks of the file input (the id 0 
 //     refers to the first file written in the config file):
 ArrayList<Bloco> HDFS_SPLITS_LIST = storage.getBlocks(0);
 
-//3º - Use each block retrieved like a file as usual:
+//4º - Use each block retrieved like a file as usual:
 for(Block blk : HDFS_SPLITS_LIST) {
 	HashMap<String, Integer> partialResult = map(blk);
 	result = mergeResults(partialResult, result);
