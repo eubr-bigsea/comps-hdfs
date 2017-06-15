@@ -116,7 +116,7 @@ After compile it (There is already a jar in the folder WordCount/target), use th
 
 
 
-## How to edit or rebuild the Integration
+## How to edit, rebuild and add the Integration in your Local Maven repository:
 
 If you want to change or develop something in the HDFS's connector you could use the ["pom.xml"](https://github.com/eubr-bigsea/compss-HDFS/tree/master/HDFS_Integration/pom.xml) (Maven) provided in this repository to build a new jar: 
 
