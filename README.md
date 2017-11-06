@@ -92,7 +92,7 @@ In this other example, you will have the same steps:
 ```
 //1º - import the classes:
 
-import integration.Block;
+import integration.BlockLocality;
 import storage.StorageItf;
 
 ...
@@ -101,10 +101,10 @@ public static StorageItf dfs;
 	
 //3º - Retrieve a list of all blocks of the file input (the id 0 
 //     refers to the first file written in the config file):
-ArrayList<Bloco> HDFS_SPLITS_LIST = storage.getBlocks(0);
+ArrayList<BlockLocality> HDFS_SPLITS_LIST = storage.getBlocks(0);
 
 //4º - Use each block retrieved like a file as usual:
-for(Block blk : HDFS_SPLITS_LIST) {
+for(BlockLocality blk : HDFS_SPLITS_LIST) {
 	HashMap<String, Integer> partialResult = map(blk);
 	result = mergeResults(partialResult, result);
 }
