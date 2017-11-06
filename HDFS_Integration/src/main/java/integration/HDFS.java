@@ -27,7 +27,7 @@ public class HDFS implements Serializable {
     private boolean ended = false;
     private long state=0;
     private long bytes_readeds = 0;
-
+    private BufferedWriter br;
 
 
     public HDFS(String defaultFS){
@@ -106,11 +106,11 @@ public class HDFS implements Serializable {
      *
      * @deprecated
      */
-    public ArrayList<Block> findALLBlocksByStorageAPI (String path,int number_block){
+    public ArrayList<BlockLocality> findALLBlocksByStorageAPI (String path,int number_block){
         path = defaultFS+path;
         if (debug)
             System.out.println("Current Path: " + path);
-        ArrayList<Block> b = new ArrayList<Block>();
+        ArrayList<BlockLocality> b = new ArrayList<BlockLocality>();
         long first_offset = 0;
 
         try{
@@ -125,7 +125,7 @@ public class HDFS implements Serializable {
 
             for(BlockLocation aLocation : bLocations){
 
-                Block c = new Block();
+                BlockLocality c = new BlockLocality();
                 c.setStart(aLocation.getOffset());
                 c.setEnd(aLocation.getLength());
                 c.setDefaultFS(defaultFS);
@@ -234,7 +234,7 @@ public class HDFS implements Serializable {
             long offset = 0;
             long first_offset = 0;
 
-            if (debug) System.out.println("size: " + size + " BlckSize:"+blockSize);
+            if (debug) System.out.println("size: " + size + " BlockSize:"+blockSize);
 
             while(number_block < nodes){
 
@@ -371,18 +371,16 @@ public class HDFS implements Serializable {
      * @param the_last              Whether the block is the last or not
      * @return                  A chunck of "size_of_chunck" bytes (byte[])
      */
-    public byte[] read_chunck( long start, long offset, int size_of_chunck,int i_block, boolean the_last ) throws Exception {
+    public byte[] read_chunck( long start, long offset, int size_of_chunck,
+                               int i_block, boolean the_last ) throws Exception {
         byte[] chunck = new byte[size_of_chunck];
 
         if(state == start){
 
-            /*
-                Eu sei quantos blocos tem, qual o tamanho dos blocos, entao eu sei onde
-                vou começar a extrair
-             */
             if(i_block!=0){
-                long faltantes = i_block*fragment_size -
-                               (size_of_chunck)*((i_block* fragment_size)/size_of_chunck); //divisao por inteiro, entao só obtenho a parte inteira
+                long faltantes = (i_block * fragment_size) - ( size_of_chunck *
+                        ((i_block* fragment_size)/size_of_chunck) );
+
                 int jump = size_of_chunck - (int) faltantes;
                 state = state+jump;
             }
@@ -395,7 +393,6 @@ public class HDFS implements Serializable {
         fsDataInputStream.readFully(state, chunck, 0,  size_of_chunck);
         state += size_of_chunck;
 
-
         if( state>=(start +offset) )
             this.ended = true;
 
@@ -403,11 +400,11 @@ public class HDFS implements Serializable {
     }
 
 
-    /*---------------------------------------------------------------------------------------
+    /*---------------------------------------------------------------------------
 
                                     Write Operations
 
-     ---------------------------------------------------------------------------------------*/
+     --------------------------------------------------------------------------*/
 
     /**
      * Create a empty file in the HDFS
@@ -471,5 +468,36 @@ public class HDFS implements Serializable {
         return false;
     }
 
+
+    /**
+     * Write the text in a HDFS file.
+     *
+     * @param  text         The content to be written
+     * @param  dst          Path of the file
+     * @param  first        Whether is the first block to be written
+     * @param  last         Whether is the last  block to be written
+     */
+    public boolean writeBlocks (String text, String dst, boolean first, boolean last)  {
+        try {
+
+            if (first){
+                fs = FileSystem.get(conf);
+                Path pt = new Path(defaultFS+dst);
+                OutputStreamWriter out =
+                        new OutputStreamWriter(fs.create(pt, true));
+                br = new BufferedWriter(out);
+            }
+
+            br.write(text);
+
+            if (last)
+                br.close();
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
 }

@@ -11,31 +11,12 @@
 
     <packaging>jar</packaging>
     <name>HDFS_Integration</name>
-    <description>The integration between HDFS and COMPSs.</description>
+    <description>The integration between HDFS and Java COMPSs.</description>
 
     <properties>
-        <compss.version>2.0</compss.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>grid-repo</id>
-            <name>BSC Grid computing and Clusters group</name>
-            <url>http://compss.bsc.es/artifactory/grid-devel-repo</url>
-        </repository>
-    </repositories>
-
-    <!-- DISTRIBUTION MANAGEMENT -->
-    <distributionManagement>
-        <repository>
-            <id>grid-repo</id>
-            <name>BSC Grid computing and Clusters group</name>
-            <url>http://compss.bsc.es/artifactory/grid-devel-repo</url>
-        </repository>
-    </distributionManagement>
-
 
     <!-- BUILD SETTINGS -->
     <build>
@@ -57,8 +38,6 @@
                 </executions>
                 <configuration>
                     <archive>
-                        <!--  <mainClass>integration.PythonServer</mainClass>
-                        <mainClass>test.HDFSTest_LineReader</mainClass> -->
                         <manifest>
                             <mainClass>test.HDFSTest_LineReader</mainClass>
                         </manifest>
@@ -105,22 +84,6 @@
 
     <dependencies>
 
-        <!-- Import COMPSs
-        <dependency>
-            <groupId>es.bsc.compss</groupId>
-            <artifactId>compss-api</artifactId>
-            <version>${compss.version}</version>
-        </dependency>
--->
-        <!-- DEPENDENCIES of storage -->
-        <!-- https://mvnrepository.com/artifact/org.javassist/javassist
-        <dependency>
-            <groupId>org.javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <version>3.21.0-GA</version>
-        </dependency>
-
--->
 
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common -->
         <dependency>
@@ -135,7 +98,7 @@
                 </exclusion>
             </exclusions>
 
-</dependency>
+        </dependency>
 
        <!-- https://mvnrepository.com/artifact/commons-collections/commons-collections -->
         <dependency>
@@ -150,14 +113,6 @@
             <artifactId>hadoop-hdfs</artifactId>
             <version>2.7.2</version>
        </dependency>
-
-
-        <!-- https://mvnrepository.com/artifact/net.sf.py4j/py4j -->
-        <dependency>
-            <groupId>net.sf.py4j</groupId>
-            <artifactId>py4j</artifactId>
-            <version>0.10.4</version>
-        </dependency>
 
     </dependencies>
 

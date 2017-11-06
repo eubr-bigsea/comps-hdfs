@@ -1,2 +1,0 @@
-hdfs://localhost:9000
-/file-example.txt

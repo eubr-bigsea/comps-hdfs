@@ -1,6 +1,6 @@
 package storage;
 
-import integration.Block;
+import integration.BlockLocality;
 import integration.HDFS;
 
 
@@ -16,7 +16,7 @@ import java.util.*;
  */
 public final class StorageItf {
 
-    static ArrayList<Block> HDFS_SPLITS_LIST =  new ArrayList<Block>();
+    static ArrayList<BlockLocality> HDFS_SPLITS_LIST =  new ArrayList<BlockLocality>();
     static Map<Integer, Integer[]> mapper = new HashMap<Integer, Integer[]>();
 
     static HDFS dfs;
@@ -52,10 +52,10 @@ public final class StorageItf {
         try {
             br = new BufferedReader(new FileReader(storageConf));
             defaultfs   = br.readLine();
-            //System.out.println("HDFS MASTER NODE:"+defaultfs);
+            System.out.println("[INFO] - HDFS MASTER NODE:"+defaultfs);
             dfs =  new HDFS(defaultfs);
             while ((filename= br.readLine()) != null){
-                //System.out.println("Filename:"+filename);
+                System.out.println("[INFO] - Creating HDFS's Blocks of "+filename);
                 HDFS_SPLITS_LIST.addAll(dfs.findALLBlocksByStorageAPI(filename,number_block));
                 mapper.put(file_id, new Integer[] {number_block, HDFS_SPLITS_LIST.size()-1});
                // System.out.println("START:"+number_block+" END:"+(HDFS_SPLITS_LIST.size()-1));
@@ -78,11 +78,11 @@ public final class StorageItf {
      * @param id_file   id of the hdfs's file
      * @return          List of blocks splitted by number of the real blocks in the HDFS
      */
-    public static ArrayList<Block> getBlocks(int id_file) throws StorageException {
+    public static ArrayList<BlockLocality> getBlocks(int id_file) throws StorageException {
         if (id_file <= mapper.size()) {
             Integer[] pos = mapper.get(id_file);
             //System.out.println(pos[0]+"---"+(pos[1]+1));
-            return new ArrayList<Block> (HDFS_SPLITS_LIST.subList(pos[0],pos[1]+1));
+            return new ArrayList<BlockLocality> (HDFS_SPLITS_LIST.subList(pos[0],pos[1]+1));
         }else
             return null;
     }
@@ -111,7 +111,7 @@ public final class StorageItf {
         //throw new StorageException(STORAGE_NOT_FOUND_MESSAGE);
 
         List<String> locations = new ArrayList<String>();
-        for(Block b: HDFS_SPLITS_LIST){
+        for(BlockLocality b: HDFS_SPLITS_LIST){
             if (b.getID().equals(pscoId)) {
                 locations = new ArrayList<String>( Arrays.asList(b.getLocations()));
             }
@@ -160,8 +160,8 @@ public final class StorageItf {
      */
     public static Object getByID(String id) throws StorageException {
         //throw new StorageException(STORAGE_NOT_FOUND_MESSAGE);
-        Block c = new Block();
-        for(Block b: HDFS_SPLITS_LIST){
+        BlockLocality c = new BlockLocality();
+        for(BlockLocality b: HDFS_SPLITS_LIST){
             if (b.getID().equals(id))
                 c = b;
         }

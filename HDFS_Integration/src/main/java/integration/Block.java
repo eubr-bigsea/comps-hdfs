@@ -310,38 +310,7 @@ public class Block implements Serializable, Cloneable{
         end           = Long.parseLong(config[4]);
         last_block    = Boolean.parseBoolean(config[5]);
         fragment_size = Long.parseLong(config[6]);
-    }
-
-
-    //-------------------------------------------//
-    // StubItf:
-
-    /**
-     * The user should not use this method.
-     *
-     * @deprecated
-     */
-    public void deletePersistent(){
-        //HDFS will handle it
-    }
-
-    /**
-     * The user should not use this method.
-     *
-     * @deprecated
-     */
-    public void makePersistent(String id){
-        //HDFS will handle it
-    }
-
-    /**
-     * The user should not use this method.
-     *
-     * @deprecated
-     */
-    public String getID(){
-        //Its important to COMPSs
-        return index+"";
+        locations =  new String[0];
     }
 
 
