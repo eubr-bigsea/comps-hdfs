@@ -1,19 +1,33 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Interface to use the Integration API between HDFS and COMPSs.
 
-
-def mergeFiles(settings):
-    """Hadoop fs -getmerge <source path> <destination path>."""
-    src = settings['source']
-    dst = settings['destination']
-    import subprocess
-    proc = subprocess.Popen(['hadoop', 'fs', '-getmerge', src, dst],
-                            stdout=subprocess.PIPE)
+* to retrieve a fragment list:
+  * findBlocks
+  * findNBlocks
+* to read data:
+  * readDataFrame
+  * readBlock
+  * readBinary
+* to write Data:
+  * writeBlockinSerial
+  * writeBlock
+  * writeDataFrame
+  * writeFiles !
+* Util tools:
+  * existFile
+  * mergeFiles
+  * mkdir
+"""
+# ------------------------------------------------
+# Methods to retrieve the fragment list
 
 
 def findBlocks(hdfs_ops):
-    """findBlocks."""
+    """findBlocks.
 
+    Retrieve the real blocks of a file (as HDFS used to store it).
+    """
     from hdfs_pycompss._hdfs import HDFS
 
     try:
@@ -114,7 +128,11 @@ def findNBlocks(hdfs_ops, numFrag):
         return list_blocks
 
 
-def readDataFrame(block, csv_options):
+# -------------------------------------------------------------
+#   Methods to Read Data:
+#
+
+def readDataFrame(block, settings):
     """Read a fragment as a pandas's DataFrame."""
     from hdfs_pycompss._block import Block
 
@@ -122,14 +140,14 @@ def readDataFrame(block, csv_options):
                                     'start', 'length', 'lastBlock')):
         raise Exception('Invalid block object!')
 
-    sep = csv_options.get('separator', ',')
-    header_op = csv_options.get('header', True)
-    infer = csv_options.get('infer', True)
+    typeFile = settings.get('format', 'csv')
+    sep = settings.get('separator', ',')
+    header_op = settings.get('header', True)
+    infer = settings.get('infer', True)
     na_values = ['', '#N/A', '#N/A N/A', '#NA', '-1.#IND',
                  '-1.#QNAN', '-NaN', '-nan', '1.#IND', '1.#QNAN',
                  'N/A', 'NA', 'NULL', 'NaN', 'nan']
-    na_values = csv_options.get('na_values', na_values)
-
+    na_values = settings.get('na_values', na_values)
     data = ''
     header = ''
     from StringIO import StringIO
@@ -141,15 +159,13 @@ def readDataFrame(block, csv_options):
     else:
         host = 'default'
         port = 0
-
     hdfs_path = block['path']
-    # end = block['start']+block['length']
-
     dfs = Block(host, port, hdfs_path, mode='r')
 
-    # adding header
-    if block['start'] > 0 and header_op:
-        header = dfs.readline(0)
+    if typeFile == 'csv':
+        # adding header
+        if block['start'] > 0 and header_op:
+            header = dfs.readline(0)
 
     # adding the phisical content (hdfs block)
     data = dfs.pread(block['start'], block['length'])
@@ -170,29 +186,37 @@ def readDataFrame(block, csv_options):
             header_op = 'infer'
         else:
             header_op = None
-
-        mode = csv_options.get('mode', 'FAILFAST')
+        mode = settings.get('mode', 'FAILFAST')
         if mode == 'FAILFAST':
             # Stop processing and raise error
             error_bad_lines = True
         elif mode == 'DROPMALFORMED':
             # Ignore whole corrupted record
             error_bad_lines = False
+        if typeFile == 'csv':
+            if infer:
+                data = pd.read_csv(StringIO(data), sep=sep,
+                                   na_values=na_values,
+                                   parse_dates=True, header=header_op,
+                                   error_bad_lines=error_bad_lines)
+            else:
+                data = pd.read_csv(StringIO(data), sep=sep,
+                                   na_values=na_values,
+                                   header=header_op,
+                                   error_bad_lines=error_bad_lines,
+                                   dtype='str')
 
-        if infer:
-            data = pd.read_csv(StringIO(data), sep=sep, na_values=na_values,
-                               parse_dates=True, header=header_op,
-                               error_bad_lines=error_bad_lines)
-
-        else:
-            data = pd.read_csv(StringIO(data), sep=sep, na_values=na_values,
-                               header=header_op,
-                               error_bad_lines=error_bad_lines, dtype='str')
-
-        if not header_op:
-            n_cols = len(data.columns)
-            new_columns = ['col_{}'.format(i) for i in range(n_cols)]
-            data.columns = new_columns
+            if not header_op:
+                n_cols = len(data.columns)
+                new_columns = ['col_{}'.format(i) for i in range(n_cols)]
+                data.columns = new_columns
+        elif typeFile == 'JSON':
+            if infer:
+                data = pd.read_json(StringIO(data), orient='records',
+                                    lines=True)
+            else:
+                data = pd.read_json(StringIO(data), orient='records',
+                                    dtype='str', lines=True)
 
     except Exception as e:
         print e
@@ -202,7 +226,7 @@ def readDataFrame(block, csv_options):
 
 
 def readBlock(block):
-
+    """Read the fragment as a common file. Return a StringIO file."""
     from hdfs_pycompss._block import Block
     from cStringIO import StringIO
 
@@ -212,17 +236,13 @@ def readBlock(block):
 
     try:
         data = ''
-
         if all(['host' in block, 'port' in block]):
             host = block['host']
             port = block['port']
         else:
             host = 'default'
             port = 0
-
         hdfs_path = block['path']
-        end = block['start']+block['length']
-
         dfs = Block(host, port, hdfs_path, mode='r')
 
         # adding the phisical content (hdfs block)
@@ -236,75 +256,43 @@ def readBlock(block):
         if not block['lastBlock']:
             data = data + dfs.readline(block['start']+block['length'])
 
-        data = data[:-2]  # remove the last "\n"
+        # k = data.rfind("\n")
+        # data = data[:k]
     except Exception as e:
         print e
         raise Exception('Error while trying to read a hdfs block')
     return StringIO(data)
 
-
-def readJsonDataFrame(block, csv_options):
-
-    from hdfs_pycompss._block import Block
-
-    if not all(k in block for k in ('length', 'port', 'path',
-                                    'start', 'length', 'lastBlock')):
-        raise Exception('Invalid block object!')
-
-    infer = csv_options.get('infer', True)
-    na_values = ['', '#N/A', '#N/A N/A', '#NA', '-1.#IND',
-                 '-1.#QNAN', '-NaN', '-nan', '1.#IND', '1.#QNAN',
-                 'N/A', 'NA', 'NULL', 'NaN', 'nan']
-    na_values = csv_options.get('na_values', na_values)
-
-    data = ''
-    header = ''
-    from StringIO import StringIO
-    import pandas as pd
-
-    if all(['host' in block, 'port' in block]):
-        host = block['host']
-        port = block['port']
+def readBinary(settings):
+    """Read all file as binary. Used for example to read shapefile."""
+    if all(['host' in settings, 'port' in settings]):
+        host = settings['host']
+        port = settings['port']
     else:
         host = 'default'
         port = 0
+    hdfs_path = settings['path']
 
-    hdfs_path = block['path']
-    #end = block['start']+block['length']
+    from hdfs_pycompss._block import Block
+    dfs = Block(host, port, hdfs_path, mode='r',
+                buffer_size=settings['length'])
 
-    dfs = Block(host, port, hdfs_path, mode='r')
-
-    # adding the phisical content (hdfs block)
-    data = dfs.pread(block['start'], block['length'])
-    if block['start'] > 0:
-        index = data.find("\n")
-        if index != -1:
-            data = data[index:]
-
-    data = header + data
-    # adding the logical content (block --> split)
-    if not block['lastBlock']:
-        data = data + dfs.readline(block['start']+block['length'])
-
+    data = dfs.readBinary(settings['length'])
     dfs.close()
-
-    try:
-
-        if infer:
-            data = pd.read_json(StringIO(data), orient='records', lines=True)
-        else:
-            data = pd.read_json(StringIO(data), orient='records',
-                                dtype='str', lines=True)
-
-    except Exception as e:
-        print e
-        raise Exception("The Json is wrong format!")
-
     return data
 
 
-def writeBlock(settings, data, dfs, hasMore):
-    """Write a fragment of file into a opened file."""
+# -------------------------------------------------------------
+#   Methods to Write Data:
+#
+
+def writeBlockinSerial(settings, data, dfs, hasMore):
+    """
+    writeBlock.
+
+    Write a fragment of file into a opened file (writing in serial).
+    You must use this method in the master COMPSs node.
+    """
     if all(['host' in settings, 'port' in settings]):
         host = settings['host']
         port = settings['port']
@@ -325,8 +313,8 @@ def writeBlock(settings, data, dfs, hasMore):
     return success, dfs
 
 
-def writeSplittedBlock(settings, data):
-    """writeSplittedBlock.
+def writeBlock(settings, data):
+    """writeBlock.
 
     :param settings: A dictionary that contains:
         - host: the namenode HDFS's host;
@@ -336,22 +324,17 @@ def writeSplittedBlock(settings, data):
             * ignore: do nothing;
             * error: raise a error;
             * overwrite;
-
-    :para data: A list of strings.
+    :param data: A string.
     """
+    from hdfs_pycompss._block import Block
+    hdfs_path = settings['path']
     if all(['host' in settings, 'port' in settings]):
         host = settings['host']
         port = settings['port']
     else:
         host = 'default'
         port = 0
-
-    hdfs_path = settings['path']
-
-    from hdfs_pycompss._block import Block
-    from pycompss.api.api import compss_wait_on
-
-    file_exists = ExistFile(settings)
+    file_exists = existFile(settings)
 
     if file_exists and settings['mode'] == 'error':
         raise Exception('File already exists.')
@@ -362,20 +345,14 @@ def writeSplittedBlock(settings, data):
         pass
 
     dfs = Block(host, port, hdfs_path, mode='w')
-
-    success = True
-    for i in range(len(data)):
-        part = data[i]
-        part = compss_wait_on(part)
-        success = True and dfs.write(part)
-
+    success = dfs.write(data)
     dfs.close()
 
     return success
 
 
-def writeSplittedDataFrame(settings, data):
-    """writeSplittedDataFrame.
+def writeDataFrame(settings, data):
+    """writeDataFrame.
 
     :param settings: A dictionary that contains:
         - host: the namenode HDFS's host;
@@ -386,8 +363,7 @@ def writeSplittedDataFrame(settings, data):
             * ignore: do nothing;
             * error: raise a error;
             * overwrite;
-
-    :para data: A list of dataframe (ie., one splitted dataframe)
+    :param data: A dataframe.
     """
     if all(['host' in settings, 'port' in settings]):
         host = settings['host']
@@ -400,11 +376,10 @@ def writeSplittedDataFrame(settings, data):
     header_op = settings.get('header', True)
 
     from hdfs_pycompss._block import Block
-    from pycompss.api.api import compss_wait_on
     import pandas as pd
     import StringIO
 
-    file_exists = ExistFile(settings)
+    file_exists = existFile(settings)
 
     if file_exists and settings['mode'] == 'error':
         raise Exception('File already exists.')
@@ -415,38 +390,54 @@ def writeSplittedDataFrame(settings, data):
         pass
     dfs = Block(host, port, hdfs_path, mode='w')
 
-    success = True
-    for i in range(len(data)):
-        part = data[i]
-        part = compss_wait_on(part)
-        s = StringIO.StringIO()
-        part.to_csv(s, header=header_op, index=False, sep=',')
-        success = True and dfs.write(s.getvalue())
-        header_op = False
-
+    s = StringIO.StringIO()
+    data.to_csv(s, header=header_op, index=False, sep=',')
+    success = dfs.write(s.getvalue())
     dfs.close()
 
     return success
 
 
-def readAllBytes(settings):
-    if all(['host' in settings, 'port' in settings]):
-        host = settings['host']
-        port = settings['port']
+def writeFiles(settings):
+    """Copy local files to HDFS.
+
+        * dst: if dst i"""
+    wait = settings.get('wait', False)
+    src = settings['path']
+    dst = settings.get('dst', '')
+    if dst == "":
+        dst = src
+
+    import os
+    import subprocess
+    FNULL = open(os.devnull, 'w')
+
+    if isinstance(src, list) and isinstance(dst, list):
+            for source in src:
+                for out in dst:
+                    command = "cat {0} | hdfs dfs -put - {1}".\
+                               format(source, out)
+                    if wait:
+                        subprocess.call(command, shell=True, stdout=FNULL,
+                                        stderr=subprocess.STDOUT)
+                    else:
+                        subprocess.Popen(command, shell=True, stdout=FNULL,
+                                         stderr=subprocess.STDOUT)
     else:
-        host = 'default'
-        port = 0
+        command = "cat {0} | hdfs dfs -put - {1}".\
+                   format(src, dst)
+        if wait:
+            subprocess.call(command, shell=True, stdout=FNULL,
+                            stderr=subprocess.STDOUT)
+        else:
+            subprocess.Popen(command, shell=True, stdout=FNULL,
+                             stderr=subprocess.STDOUT)
 
-    hdfs_path = settings['path']
-    from hdfs_pycompss._block import Block
-    dfs = Block(host, port, hdfs_path, mode='r')
-
-    data = dfs.read()
-    dfs.close()
-    return data
+# ------------------------------------
+#  Util tools
 
 
-def ExistFile(hdfs_ops):
+def existFile(hdfs_ops):
     """Check if file is in HDFS."""
     from hdfs_pycompss._hdfs import HDFS
     if all(['host' in hdfs_ops, 'port' in hdfs_ops]):
@@ -462,20 +453,50 @@ def ExistFile(hdfs_ops):
     return dfs.exists(hdfs_path)
 
 
-def readBinary(settings):
-    """Read all file as binary. Used for example to read shapefile"""
-    if all(['host' in settings, 'port' in settings]):
-        host = settings['host']
-        port = settings['port']
+def mkdir(hdfs_ops):
+    """Create a folder in HDFS."""
+    from hdfs_pycompss._hdfs import HDFS
+    if all(['host' in hdfs_ops, 'port' in hdfs_ops]):
+        host = hdfs_ops['host']
+        port = hdfs_ops['port']
     else:
         host = 'default'
         port = 0
-    hdfs_path = settings['path']
+    hdfs_path = hdfs_ops['path']
+    dfs = HDFS(host, port)
+    success = dfs.mkdir(hdfs_path)
+    return success
 
-    from hdfs_pycompss._block import Block
-    dfs = Block(host, port, hdfs_path, mode='r',
-                buffer_size=settings['length'])
 
-    data = dfs.readBinary(settings['length'])
-    dfs.close()
-    return data
+def mergeFiles(settings):
+    """Merge files in HDFS.
+
+    :param settings a python dictionary where,
+        * path: mask of files to be merged;
+        * dst: output name;
+        * wait: True to wait the end of operation (default);
+        * rm: Remove the input files after the merge.
+    """
+    src = settings['path']
+    dst = settings['dst']
+    wait = settings.get('wait', False)
+    rm = settings.get('rm', True)
+
+    import os
+    import subprocess
+    FNULL = open(os.devnull, 'w')
+
+    if rm:
+        command = "hdfs dfs -text {} | hdfs dfs -put - {} && "\
+                  "hdfs dfs -rm -r {}".format(src, dst, src)
+    else:
+        command = "hdfs dfs -text {0} | hdfs dfs -put - {1}".\
+                  format(src, dst)
+    if wait:
+        code = subprocess.call(command, shell=True, stdout=FNULL,
+                               stderr=subprocess.STDOUT)
+    else:
+        code = subprocess.Popen(command, shell=True, stdout=FNULL,
+                                stderr=subprocess.STDOUT)
+
+    return (code == 0)

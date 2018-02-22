@@ -34,6 +34,8 @@ After that, create a folder in `/usr/local/lib/hdfs-pycompss/` and move the fold
 
 Then, run the command `hadoop classpath --jar hdfs-connector.jar`, it will work in any directory as long as the *$HADOOP_HOME/bin*  folder is in the *PATH* of your environment. And then, put the "hdfs-connector.jar" in `/usr/local/lib/hdfs-pycompss/libhdfs/` folder. This file is responsible to link all jars required to the classpath during execution.
 
+You can add the `hdfsPyCOMPSs` folder in your own project folder or you could move it to a Python's libraries folder (such as: `/usr/lib/python2.7/`)
+
 
 ## Known issues
 
