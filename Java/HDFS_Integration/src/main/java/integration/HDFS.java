@@ -1,5 +1,6 @@
 package integration;
 
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
@@ -8,6 +9,7 @@ import org.apache.hadoop.util.LineReader;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class HDFS implements Serializable {
@@ -34,8 +36,10 @@ public class HDFS implements Serializable {
         this.defaultFS = defaultFS;
         this.conf = new Configuration();
         this.conf.set("fs.defaultFS", defaultFS);
-        this.conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName() );
-        this.conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName() );
+        this.conf.set("fs.hdfs.impl",
+                org.apache.hadoop.hdfs.DistributedFileSystem.class.getName() );
+        this.conf.set("fs.file.impl",
+                org.apache.hadoop.fs.LocalFileSystem.class.getName() );
         this.conf.setBoolean("fs.hdfs.impl.disable.cache", true);
         this.conf.setBoolean("fs.file.impl.disable.cache", true);
 
@@ -51,62 +55,19 @@ public class HDFS implements Serializable {
 
 
 
-    /*---------------------------------------------------------------------------------------
+    /*--------------------------------------------------------------------------
 
-                                    Management Operations
+                              Find Blocks Operations
 
-     ---------------------------------------------------------------------------------------*/
+    -------------------------------------------------------------------------*/
 
-
-    /**
-     * Set the user who is accessing the data
-     *
-     * @param  user  username
-     */
-    public void setUserHDFS(String user){
-        this.conf.set("hadoop.job.ugi", user);
-    }
-
-
-    /**
-     * List all the files in the folder
-     *
-     * @param  dir  Path of the folder
-     * @return      Return a list of all files in the folder
-     */
-    public ArrayList<String> ls (String dir){
-        ArrayList<String> files = new ArrayList<String>();
-        try {
-            FileStatus[] status = fs.listStatus(new Path(dir));
-            for(int i=0;i<status.length;i++){
-                files.add(status[i].getPath().toString());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return files;
-    }
-
-
-    /**
-     * Create a new folder on the HDFS. You need to create the folders in order.
-     *
-     * @param  path  Path of the folder
-     */
-    public void mkdir (String path){
-        try{
-            fs.createNewFile(new Path(path));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     /**
      * The user should not use this method.
      *
      * @deprecated
      */
-    public ArrayList<BlockLocality> findALLBlocksByStorageAPI (String path,int number_block){
+    public ArrayList<BlockLocality> findALLBlocksByStorageAPI (String path, int number_block){
         path = defaultFS+path;
         if (debug)
             System.out.println("Current Path: " + path);
@@ -130,8 +91,10 @@ public class HDFS implements Serializable {
                 c.setEnd(aLocation.getLength());
                 c.setDefaultFS(defaultFS);
 
-                if ((number_block +1) == (baseNumber+bLocations.length) )  c.setTheLast(true);
-                else                                                       c.setTheLast(false);
+                if ((number_block +1) == (baseNumber+bLocations.length) )
+                    c.setTheLast(true);
+                else
+                    c.setTheLast(false);
 
                 c.setPath(path);
                 c.setIndex(number_block);
@@ -186,8 +149,10 @@ public class HDFS implements Serializable {
                 c.setEnd(aLocation.getLength());
                 c.setDefaultFS(defaultFS);
 
-                if ((number_block +1) == bLocations.length )               c.setTheLast(true);
-                else                                                       c.setTheLast(false);
+                if ((number_block +1) == bLocations.length )
+                    c.setTheLast(true);
+                else
+                    c.setTheLast(false);
 
                 c.setPath(path);
                 c.setIndex(number_block);
@@ -234,14 +199,16 @@ public class HDFS implements Serializable {
             long offset = 0;
             long first_offset = 0;
 
-            if (debug) System.out.println("size: " + size + " BlockSize:"+blockSize);
+            if (debug)
+                System.out.println("size: " + size + " BlockSize:"+blockSize);
 
             while(number_block < nodes){
 
                 start += offset;
                 size -= blockSize;
-                offset = ((number_block +1) == nodes) ? blockSize+size : blockSize;
-                if (debug) System.out.println("Start:" + start + " Offset:"+ offset);
+                offset = ((number_block+1) == nodes) ? blockSize+size:blockSize;
+                if (debug)
+                    System.out.println("Start:" + start + " Offset:"+ offset);
 
                 Block c = new Block();
                 c.setStart(start);
@@ -269,34 +236,12 @@ public class HDFS implements Serializable {
     }
 
 
-    public void closeConection()  {
-        IOUtils.closeStream(fsDataInputStream);
-    }
 
-    /**
-     *
-     * @deprecated
-     */
-    public boolean hasrecord(){   return !ended;   }
+    /*--------------------------------------------------------------------------
 
-    /**
-     *
-     * @deprecated
-     */
-    public long refreshState (){
-        return this.state;
-    }
+                                        Read Operations
 
-    public void setDebug(boolean d){
-        debug = d;
-    }
-
-
-    /*---------------------------------------------------------------------------------------
-
-                                    Read Operations
-
-     ---------------------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 
 
@@ -425,7 +370,7 @@ public class HDFS implements Serializable {
      *
      * @param  text         The content to be written
      * @param  dst          Path of the file
-     * @param  append       Whether append the content into the file (if exists) or not
+     * @param  append       True to append the content into existent file
      */
     public boolean writeFILE (String text, String dst, boolean append)  {
         try {
@@ -436,7 +381,7 @@ public class HDFS implements Serializable {
             //Destination file in HDFS
             if (!append){
                 try {
-                    BufferedWriter br=new BufferedWriter(new OutputStreamWriter(fs.create(pt,true)));
+                    BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(pt,true)));
                     // TO append data to a file, use fs.append(Path f)
                     br.write(text);
                     br.close();
@@ -470,14 +415,15 @@ public class HDFS implements Serializable {
 
 
     /**
-     * Write the text in a HDFS file.
+     * Write a set of blocks into one HDFS file (in serial).
      *
      * @param  text         The content to be written
      * @param  dst          Path of the file
      * @param  first        Whether is the first block to be written
      * @param  last         Whether is the last  block to be written
      */
-    public boolean writeBlocks (String text, String dst, boolean first, boolean last)  {
+    public boolean writeBlocks (String text, String dst,
+                                boolean first, boolean last)  {
         try {
 
             if (first){
@@ -498,6 +444,164 @@ public class HDFS implements Serializable {
             e.printStackTrace();
         }
         return false;
+    }
+
+
+
+
+    /*--------------------------------------------------------------------------
+
+                              Management Operations
+
+    -------------------------------------------------------------------------*/
+
+    /**
+     * Merge a set of HDFS files into a single file.
+     *
+     * @param  srcDir    The mask for the location of the files
+     * @param  dstFile    The output file
+     * @param  rm     True to remove the input files after the operation
+     */
+    public boolean mergeFiles (String srcDir, String dstFile, boolean rm){
+        boolean code = false;
+        String addString = null;
+        try {
+            fs = FileSystem.get(conf);
+            copyMerge(fs, new Path(defaultFS+srcDir), fs,
+                    new Path(defaultFS+dstFile), rm, conf, addString);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+        return code;
+    }
+
+
+    /** Copy all files in a directory to one output file (merge). */
+    private boolean copyMerge(FileSystem srcFS, Path srcDir,
+                                    FileSystem dstFS, Path dstFile,
+                                    boolean deleteSource,
+                                    Configuration conf, String addString) throws IOException {
+        dstFile = checkDest(srcDir.getName(), dstFS, dstFile, false);
+
+        if (!srcFS.getFileStatus(srcDir).isDirectory())
+            return false;
+
+        OutputStream out = dstFS.create(dstFile);
+
+        try {
+            FileStatus contents[] = srcFS.listStatus(srcDir);
+            Arrays.sort(contents);
+            for (int i = 0; i < contents.length; i++) {
+                if (contents[i].isFile()) {
+                    InputStream in = srcFS.open(contents[i].getPath());
+                    try {
+                        IOUtils.copyBytes(in, out, conf, false);
+                        if (addString!=null)
+                            out.write(addString.getBytes("UTF-8"));
+
+                    } finally {
+                        in.close();
+                    }
+                }
+            }
+        } finally {
+            out.close();
+        }
+
+
+        if (deleteSource) {
+            return srcFS.delete(srcDir, true);
+        } else {
+            return true;
+        }
+    }
+
+    private static Path checkDest(String srcName, FileSystem dstFS, Path dst,
+                                  boolean overwrite) throws IOException {
+        if (dstFS.exists(dst)) {
+            FileStatus sdst = dstFS.getFileStatus(dst);
+            if (sdst.isDirectory()) {
+                if (null == srcName) {
+                    throw new IOException("Target " + dst + " is a directory");
+                }
+                return checkDest(null, dstFS, new Path(dst, srcName), overwrite);
+            } else if (!overwrite) {
+                throw new IOException("Target " + dst + " already exists");
+            }
+        }
+        return dst;
+    }
+
+    /**
+     * Set the user who is accessing the data
+     *
+     * @param  user  username
+     */
+    public void setUserHDFS(String user){
+        this.conf.set("hadoop.job.ugi", user);
+    }
+
+
+    /**
+     * List all the files in the folder
+     *
+     * @param  dir  Path of the folder
+     * @return      Return a list of all files in the folder
+     */
+    public ArrayList<String> ls (String dir){
+        ArrayList<String> files = new ArrayList<String>();
+        try {
+            FileStatus[] status = fs.listStatus(new Path(dir));
+            for(int i=0;i<status.length;i++){
+                files.add(status[i].getPath().toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return files;
+    }
+
+
+    /**
+     * Make the given file and all non-existent parents into
+     * directories. Has the semantics of Unix 'mkdir -p'.
+     *
+     * @param  path  Path of the folder
+     */
+    public void mkdir (String path){
+        try{
+            fs.mkdirs(new Path(path));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void closeConection()  {
+        IOUtils.closeStream(fsDataInputStream);
+    }
+
+    /**
+     *
+     * @deprecated
+     */
+    public boolean hasrecord(){   return !ended;   }
+
+    /**
+     *
+     * @deprecated
+     */
+    public long refreshState (){
+        return this.state;
+    }
+
+
+    public void setDebug(boolean d){
+        debug = d;
     }
 
 }
