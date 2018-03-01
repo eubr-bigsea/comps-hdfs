@@ -3,7 +3,7 @@
 """COMPSs Storage API."""
 __author__ = "Lucas Miguel Simões Ponce"
 __email__ = "lucasmsp@gmail.com"
-from BlockLocality import BlockLocality, Blocks
+from BlockLocality import BlockLocality, ListBlocks
 
 
 class StorageException(Exception):
@@ -30,7 +30,7 @@ def init(config_file_path=None):
         settings['path'] = filesList[i]
         HDFS_BLOCKS += hdfs.findBlocks(settings)
 
-    Blocks.HDFS_BLOCKS = HDFS_BLOCKS
+    ListBlocks.HDFS_BLOCKS = HDFS_BLOCKS
     pass
 
 

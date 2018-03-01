@@ -6,8 +6,19 @@ __email__ = "lucasmsp@gmail.com"
 
 import api
 
-class Blocks(object):
+
+class ListBlocks(object):
     HDFS_BLOCKS = None
+
+    @staticmethod
+    def findBlocks(name):
+        """Get blocks by name."""
+        tmp = []
+        for block in ListBlocks.HDFS_BLOCKS:
+            if block['path'] == name:
+                tmp.append(block)
+        return tmp
+
 
 class StorageObject(object):
     """Storage Object Interface."""
@@ -55,6 +66,21 @@ class BlockLocality(StorageObject):
         """Change the block."""
         self.blk = content
 
-    def getInfo(self):
+    def toString(self):
         """Only for test purposes."""
-        print self.blk
+        return self.blk
+
+    def readBlock(self):
+        """Read Block from HDFS as a common file."""
+        import hdfs_pycompss.hdfsConnector as hdfs
+        return hdfs.readBlock(self.blk)
+
+    def readBinary(self):
+        """Read a Binary Block from HDFS."""
+        import hdfs_pycompss.hdfsConnector as hdfs
+        return hdfs.readBinary(self.blk)
+
+    def readDataFrame(self, settings_df):
+        """Read a DataFrame from HDFS."""
+        import hdfs_pycompss.hdfsConnector as hdfs
+        return hdfs.readDataFrame(self.blk, settings_df)

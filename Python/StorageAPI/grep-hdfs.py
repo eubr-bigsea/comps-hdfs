@@ -9,17 +9,15 @@ import re
 from pycompss.api.task import task
 from pycompss.api.parameter import *
 from pycompss.functions.reduce import mergeReduce
-from storage.BlockLocality import BlockLocality, Blocks
+from storage.BlockLocality import BlockLocality, ListBlocks
 
 
 @task(returns=list)
 def find(blk, word):
     """Using the Storage API, blk will be a BlockLocality object."""
     print """Using the Storage API, blk will be a BlockLocality object."""
-    import hdfs_pycompss.hdfsConnector as hdfs
-    blk = blk.get_content()
-    print "Block:", blk
-    text = hdfs.readBlock(blk)
+    print "Block:", blk.toString()
+    text = blk.readBlock()
     partialResult = 0
     for line in text:
         # line = re.split('[?!:;\s]|(?<!\d)[,.]|[,.](?!\d)', line)
@@ -27,14 +25,14 @@ def find(blk, word):
         for entry in line:
             if entry == word:
                 partialResult += 1
-    print partialResult
+
     return [partialResult]
 
 
 if __name__ == "__main__":
     from pycompss.api.api import compss_wait_on as sync
 
-    HDFS_BLOCKS = Blocks.HDFS_BLOCKS
+    HDFS_BLOCKS = ListBlocks.findBlocks('/JavaIntegration.txt')
 
     word = "ipsum"
     numFrag = len(HDFS_BLOCKS)
