@@ -45,7 +45,6 @@ def findBlocks(hdfs_ops):
         stats = dfs.stat(hdfs_path)
         blockSize = stats.BlockSize
         length = stats.Size
-        name = stats.Name
 
         remains = length
         i_start = -blockSize
@@ -57,7 +56,7 @@ def findBlocks(hdfs_ops):
             remains -= blockSize
             if remains >= 0:
                 locality = dfs.getHosts(hdfs_path, i_start, blockSize)
-                block = {'host': host, 'path': name, 'start': i_start,
+                block = {'host': host, 'path': hdfs_path, 'start': i_start,
                          'length': blockSize, 'lastBlock': False,
                          'port': port, 'idBlock': idBlock,
                          'locality': locality}
@@ -65,7 +64,7 @@ def findBlocks(hdfs_ops):
             else:
                 remains = length - i_start
                 locality = dfs.getHosts(hdfs_path, i_start, remains)
-                block = {'host': host, 'path': name, 'start': i_start,
+                block = {'host': host, 'path': hdfs_path, 'start': i_start,
                          'length': remains, 'lastBlock': True,
                          'port': port, 'idBlock': idBlock,
                          'locality': locality}

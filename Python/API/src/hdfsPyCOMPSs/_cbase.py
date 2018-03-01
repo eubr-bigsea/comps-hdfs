@@ -53,8 +53,12 @@ class hdfsStats(Structure):
 
 ######################################################################
 
-APILibHdfs = cdll.LoadLibrary('/usr/local/lib/hdfs-pycompss/'
-                              'libhdfs/libhdfs.so')
+try:
+    APILibHdfs = cdll.LoadLibrary('/usr/local/lib/hdfs-pycompss/'
+                                  'libhdfs/libhdfs.so')
+except Exception:
+    print "Error: libhdfs not found at /usr/local/lib/hdfs-pycompss/libhdfs/"
+    raise
 
 """
 int hdfsAvailable(hdfsFS fs, hdfsFile file):
