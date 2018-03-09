@@ -10,7 +10,7 @@
 		/JavaIntegration.txt
 		EOF
  
- 2. Run the COMPSs application, remember to add the classpath flag with the (StorageAPIpyhdfs.jar)[./StorageHDFS/target/StorageAPIpyhdfs.jar] and add the storage_conf flag with the configHDFS.txt file.
+ 2. Run the COMPSs application, remember to add the classpath flag with the [StorageAPIpyhdfs.jar](./StorageHDFS/target/StorageAPIpyhdfs.jar) and add the storage_conf flag with the configHDFS.txt file.
 
 	```bash 
 	runcompss --lang=python -d \
