@@ -13,7 +13,8 @@ class StorageException(Exception):
 
 def init(config_file_path=None):
     """It is executed at the beginning of the application."""
-    import hdfs_pycompss.hdfsConnector as hdfs
+    import hdfspycompss.HDFS import HDFS
+
     if config_file_path is None:
         ValueError("No config storage file.""")
     else:
@@ -25,10 +26,9 @@ def init(config_file_path=None):
     settings = {}
     head, sep, tail = filesList[0].replace("hdfs://", "").partition(':')
     for i in range(1, len(filesList)):
-        settings['host'] = head  # 'default'
-        settings['port'] = int(tail)  # 0
-        settings['path'] = filesList[i]
-        HDFS_BLOCKS += hdfs.findBlocks(settings)
+        dfs = HDFS(host=head, port=int(tail))
+        HDFS_BLOCKS += dfs.findBlocks(filesList[i])
+        del dfs
 
     ListBlocks.HDFS_BLOCKS = HDFS_BLOCKS
     pass

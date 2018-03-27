@@ -72,15 +72,15 @@ class BlockLocality(StorageObject):
 
     def readBlock(self):
         """Read Block from HDFS as a common file."""
-        import hdfs_pycompss.hdfsConnector as hdfs
-        return hdfs.readBlock(self.blk)
+        from hdfspycompss.Block import Block
+        return Block(self.blk).readBlock()
 
     def readBinary(self):
         """Read a Binary Block from HDFS."""
-        import hdfs_pycompss.hdfsConnector as hdfs
-        return hdfs.readBinary(self.blk)
+        from hdfspycompss.Block import Block
+        return Block(self.blk).readBinary()
 
     def readDataFrame(self, settings_df):
         """Read a DataFrame from HDFS."""
-        import hdfs_pycompss.hdfsConnector as hdfs
-        return hdfs.readDataFrame(self.blk, settings_df)
+        from hdfspycompss.Block import Block
+        return Block(self.blk).readDataFrame(settings_df)
