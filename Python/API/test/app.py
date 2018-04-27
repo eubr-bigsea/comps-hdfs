@@ -4,7 +4,6 @@ __author__ = "Lucas Miguel S Ponce"
 __email__ = "lucasmsp@gmail.com"
 
 from pycompss.api.task import task
-from pycompss.api.parameter import *
 from pycompss.api.api import compss_wait_on
 from hdfspycompss.HDFS import HDFS
 from hdfspycompss.Block import Block
