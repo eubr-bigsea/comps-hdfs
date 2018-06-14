@@ -17,12 +17,12 @@ class HDFS(object):
     * to write Data:
       * writeBlock
       * writeDataFrame
+      * writeJson
     * Util tools:
       * copyFilesToHDFS
       * exist
       * mergeFiles
       * mkdir
-      * getSuffixes
     """
 
     dfs = None
@@ -35,6 +35,9 @@ class HDFS(object):
         self.port = port
         self.host = host
 
+    def __del__(self):
+        self.dfs.disconnect()
+
     # ------------------------------------------------
     # Methods to retrieve the fragment list
     def findBlocks(self, filename):
@@ -42,7 +45,7 @@ class HDFS(object):
         try:
             list_blocks = []
             stats = self.dfs.get_block_locations(filename, start=0, length=0)
-            idBlock = 1
+            idBlock = 0
             last = False
             for blk in stats:
                 idBlock += 1
@@ -115,6 +118,33 @@ class HDFS(object):
                        overwrite=False):
         """writeDataFrame.
 
+        :param filename:
+        :param data:
+        :param header:  True to save the header;
+        :param append: True to append;
+        :param overwrite: True to overwrite if exists;
+        :return: True if it was save with success.
+        """
+        import StringIO
+
+        if append:
+            mode = 'ab'
+        else:
+            mode = 'wb'
+            if not overwrite and self.dfs.exists(filename):
+                raise Exception('File {} already exists.'.format(filename))
+
+        with self.dfs.open(filename, mode) as f:
+            s = StringIO.StringIO()
+            data.to_csv(s, header=header, index=False, sep=',')
+            f.write(s.getvalue())
+            f.close()
+
+        return True
+
+    def writeJson(self, filename, data, append=False, overwrite=False):
+        """writeJson.
+
         :param settings: A dictionary that contains:
             - path: the output name;
             - header: True to save the header;
@@ -135,7 +165,7 @@ class HDFS(object):
 
         with self.dfs.open(filename, mode) as f:
             s = StringIO.StringIO()
-            data.to_csv(s, header=header, index=False, sep=',')
+            data.to_json(s, orient='records')
             f.write(s.getvalue())
             f.close()
 
@@ -170,15 +200,6 @@ class HDFS(object):
     def ls(self, path):
         """List files at path in HDFS."""
         return self.dfs.ls(path)
-
-    def getSuffixes(self, length):
-        """Create a list of suffixes to be able to merge all files after."""
-        import itertools
-        import math
-        alpha = 'abcdefghijklmnopqrstuvwxyz'
-        r = int(math.ceil(float(length)/len(alpha)))
-        product = list(itertools.product(alpha, repeat=r))[:length]
-        return sorted(["".join(x) for x in product])
 
     def rm(self, path, recursive=False):
         """Use recursive for rm -r, i.e., delete directory and contents."""

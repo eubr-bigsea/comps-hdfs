@@ -17,7 +17,8 @@ def test01_mkdir_and_write():
     dfs = HDFS(host='localhost', port=9000)
     dfs.mkdir(path)
 
-    suffixes = dfs.get_suffixes(numFrag)
+    from hdfspycompss.Utils import get_suffixes
+    suffixes = get_suffixes(numFrag)
     filename = '/test-hdfspycompss/file'
 
     start = time.time()
